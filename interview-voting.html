@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Vote</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0f0f;
+    --paper: #f5f2ec;
+    --cream: #ede9e0;
+    --strong-yes: #1a6b3c;
+    --yes: #4a9e6f;
+    --no: #c95f2e;
+    --strong-no: #8b1a1a;
+    --accent: #2c4a8f;
+    --muted: #7a7570;
+    --border: #d4cfc6;
+    --card: #ffffff;
+    --shadow: 0 2px 16px rgba(15,15,15,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ─────────────────────────────── */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header .brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.3px;
+  }
+  header .brand span { color: #c8b97a; }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 7px 18px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    color: #a09888;
+    border: none;
+    transition: all .2s;
+  }
+  .nav-tab.active, .nav-tab:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--paper);
+  }
+
+  /* ── VIEWS ───────────────────────────────── */
+  .view { display: none; padding: 40px; max-width: 960px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* ── SECTION TITLE ───────────────────────── */
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .section-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  /* ── CARD ────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+
+  /* ── FORM ────────────────────────────────── */
+  .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .form-row.triple { flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 180px; }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+
+  /* ── BUTTON ──────────────────────────────── */
+  .btn {
+    padding: 11px 24px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover { background: #2a2a2a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--ink); }
+  .btn-danger { background: #8b1a1a; color: white; }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+
+  /* ── LINK BOX ────────────────────────────── */
+  .link-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 12px 16px;
+    margin-top: 20px;
+  }
+  .link-box code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    flex: 1;
+    word-break: break-all;
+  }
+
+  /* ── SURVEYS LIST ────────────────────────── */
+  .survey-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: var(--shadow);
+  }
+  .survey-item:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .survey-item.selected { border-color: var(--accent); background: #f0f3fa; }
+  .survey-meta { flex: 1; }
+  .survey-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    margin-bottom: 3px;
+  }
+  .survey-details { font-size: 12px; color: var(--muted); }
+  .survey-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-active { background: #e8f5ee; color: var(--strong-yes); }
+  .badge-closed { background: #f0ede8; color: var(--muted); }
+  .vote-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 40px;
+    text-align: right;
+  }
+  .vote-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  /* ── RESULTS ─────────────────────────────── */
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+  .results-candidate { font-family: 'DM Serif Display', serif; font-size: 32px; }
+  .results-role { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .results-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .vote-bars { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
+  .vote-row { display: flex; align-items: center; gap: 14px; }
+  .vote-row-label {
+    width: 110px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    height: 28px;
+    background: var(--cream);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    min-width: 0;
+  }
+  .bar-fill.strong-yes { background: var(--strong-yes); }
+  .bar-fill.yes { background: var(--yes); }
+  .bar-fill.no { background: var(--no); }
+  .bar-fill.strong-no { background: var(--strong-no); }
+  .bar-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    min-width: 32px;
+    text-align: right;
+  }
+
+  /* ── INDIVIDUAL VOTES ────────────────────── */
+  .votes-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .vote-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chip-SY { background: #e8f5ee; color: var(--strong-yes); }
+  .chip-Y  { background: #eef6f2; color: var(--yes); }
+  .chip-N  { background: #fdf0e8; color: var(--no); }
+  .chip-SN { background: #f5e8e8; color: var(--strong-no); }
+
+  /* ── VOTE PAGE (voter view) ──────────────── */
+  #voter-view {
+    max-width: 600px;
+    margin: 60px auto;
+    padding: 0 24px;
+  }
+  .voter-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 40px;
+    box-shadow: 0 4px 32px rgba(15,15,15,0.1);
+    text-align: center;
+  }
+  .voter-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .voter-candidate {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    margin-bottom: 4px;
+  }
+  .voter-role {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .voter-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--border);
+    margin-bottom: 32px;
+  }
+  .voter-name-section { margin-bottom: 28px; }
+  .vote-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .vote-btn {
+    padding: 18px 12px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    transition: all .18s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .vote-btn .vote-icon { font-size: 22px; }
+  .vote-btn.v-SY { background: #e8f5ee; color: var(--strong-yes); border-color: #c5e4d0; }
+  .vote-btn.v-Y  { background: #eef6f2; color: var(--yes);        border-color: #cce8da; }
+  .vote-btn.v-N  { background: #fdf0e8; color: var(--no);         border-color: #f5d4bc; }
+  .vote-btn.v-SN { background: #f5e8e8; color: var(--strong-no);  border-color: #e8c2c2; }
+  .vote-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+  .vote-btn.selected { border-width: 3px; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); transform: scale(1.03); }
+  .vote-btn.v-SY.selected { border-color: var(--strong-yes); }
+  .vote-btn.v-Y.selected  { border-color: var(--yes); }
+  .vote-btn.v-N.selected  { border-color: var(--no); }
+  .vote-btn.v-SN.selected { border-color: var(--strong-no); }
+
+  /* ── STATUS MESSAGES ─────────────────────── */
+  .msg { padding: 12px 16px; border-radius: 7px; font-size: 13px; margin-top: 12px; }
+  .msg-success { background: #e8f5ee; color: var(--strong-yes); }
+  .msg-error   { background: #f5e8e8; color: var(--strong-no); }
+  .msg-info    { background: #e8edf8; color: var(--accent); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+  .flex-end { display: flex; justify-content: flex-end; gap: 10px; }
+  .text-muted { color: var(--muted); font-size: 13px; }
+
+  /* ── EMPTY STATE ─────────────────────────── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 6px; }
+
+  .tag { display: inline-block; padding: 3px 10px; background: var(--cream); border-radius: 20px; font-size: 11px; color: var(--muted); margin-left: 8px; vertical-align: middle; }
+
+  @media(max-width:600px){
+    header { padding: 14px 20px; flex-direction: column; gap: 12px; }
+    .view { padding: 24px 16px; }
+    .form-row { flex-direction: column; }
+    .vote-buttons { grid-template-columns: 1fr; }
+    .voter-card { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ADMIN HEADER -->
+<div id="admin-shell">
+  <header>
+    <div class="brand">Panel<span>Vote</span></div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showView('create')">New Survey</button>
+      <button class="nav-tab" onclick="showView('surveys')">All Surveys</button>
+      <button class="nav-tab" onclick="showView('results')">Results</button>
+    </div>
+  </header>
+
+  <!-- CREATE VIEW -->
+  <div class="view active" id="v-create">
+    <p class="section-title">Create Interview Survey</p>
+    <p class="section-sub">Fill in the candidate details, then share the voting link with your panel.</p>
+
+    <div class="card">
+      <div class="form-row triple">
+        <div class="form-group" style="flex:2">
+          <label>Candidate Name</label>
+          <input id="c-name" type="text" placeholder="e.g. Sarah Johnson">
+        </div>
+        <div class="form-group" style="flex:2">
+          <label>Role / Position</label>
+          <input id="c-role" type="text" placeholder="e.g. VP of Finance">
+        </div>
+        <div class="form-group">
+          <label>Interview Date</label>
+          <input id="c-date" type="date">
+        </div>
+      </div>
+
+      <div class="flex-end" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="createSurvey()">Generate Voting Link →</button>
+      </div>
+
+      <div id="link-result" style="display:none">
+        <hr class="divider">
+        <p style="font-size:13px; margin-bottom:8px; font-weight:600;">Share this link with your panel:</p>
+        <div class="link-box">
+          <code id="generated-link"></code>
+          <button class="btn btn-outline btn-sm" onclick="copyLink()">Copy</button>
+        </div>
+        <div id="copy-msg" class="msg msg-success" style="display:none">✓ Link copied to clipboard!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SURVEYS VIEW -->
+  <div class="view" id="v-surveys">
+    <p class="section-title">All Surveys</p>
+    <p class="section-sub">Click a survey to view its results or share the link again.</p>
+    <div id="surveys-list"></div>
+  </div>
+
+  <!-- RESULTS VIEW -->
+  <div class="view" id="v-results">
+    <p class="section-title">Results</p>
+    <p class="section-sub">Select a survey from the list to see its breakdown.</p>
+    <div id="results-selector" style="margin-bottom:24px"></div>
+    <div id="results-content"></div>
+  </div>
+</div>
+
+<!-- VOTER VIEW (shown when ?vote=ID in URL) -->
+<div id="voter-view" style="display:none">
+  <div class="voter-card" id="voter-card">
+    <p class="voter-eyebrow">Interview Panel Vote</p>
+    <p class="voter-candidate" id="v-candidate"></p>
+    <p class="voter-role" id="v-role"></p>
+    <p class="voter-date" id="v-date"></p>
+
+    <div class="voter-name-section">
+      <label style="text-align:left; display:block; margin-bottom:7px">Your Name</label>
+      <input id="voter-name" type="text" placeholder="Enter your name to cast your vote">
+    </div>
+
+    <div class="vote-buttons">
+      <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')">
+        <span class="vote-icon">⬆⬆</span>Strong Yes
+      </button>
+      <button class="vote-btn v-Y" onclick="selectVote('Yes')">
+        <span class="vote-icon">⬆</span>Yes
+      </button>
+      <button class="vote-btn v-N" onclick="selectVote('No')">
+        <span class="vote-icon">⬇</span>No
+      </button>
+      <button class="vote-btn v-SN" onclick="selectVote('Strong No')">
+        <span class="vote-icon">⬇⬇</span>Strong No
+      </button>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; padding:14px; font-size:15px" onclick="submitVote()">Submit Vote</button>
+    <div id="vote-msg"></div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE HELPERS ──────────────────────────────
+const STORE_KEY = 'panelvote_surveys_v2';
+
+function loadSurveys() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveSurveys(surveys) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(surveys));
+}
+
+function getSurvey(id) {
+  return loadSurveys().find(s => s.id === id);
+}
+
+// ── ROUTING ──────────────────────────────────────
+function getVoteId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('vote');
+}
+
+function getBaseUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+// ── ADMIN: NAV ───────────────────────────────────
+const views = ['create','surveys','results'];
+function showView(name) {
+  views.forEach(v => {
+    document.getElementById('v-'+v).classList.toggle('active', v === name);
+  });
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    t.classList.toggle('active', views[i] === name);
+  });
+  if (name === 'surveys') renderSurveys();
+  if (name === 'results') renderResultsSelector();
+}
+
+// ── ADMIN: CREATE ────────────────────────────────
+function createSurvey() {
+  const name = document.getElementById('c-name').value.trim();
+  const role = document.getElementById('c-role').value.trim();
+  const date = document.getElementById('c-date').value;
+  if (!name || !role || !date) {
+    alert('Please fill in all fields.'); return;
+  }
+  const id = 'sv_' + Date.now();
+  const surveys = loadSurveys();
+  surveys.push({ id, name, role, date, votes: [], created: Date.now() });
+  saveSurveys(surveys);
+
+  const link = getBaseUrl() + '?vote=' + id;
+  document.getElementById('generated-link').textContent = link;
+  document.getElementById('link-result').style.display = 'block';
+}
+
+let _currentLink = '';
+function copyLink() {
+  const link = document.getElementById('generated-link').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const m = document.getElementById('copy-msg');
+    m.style.display = 'block';
+    setTimeout(() => m.style.display = 'none', 2500);
+  });
+}
+
+// ── ADMIN: SURVEYS LIST ──────────────────────────
+function renderSurveys() {
+  const surveys = loadSurveys().sort((a,b) => b.created - a.created);
+  const el = document.getElementById('surveys-list');
+  if (!surveys.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No surveys yet</div><p>Create your first survey in the New Survey tab.</p></div>`;
+    return;
+  }
+  el.innerHTML = surveys.map(s => {
+    const total = s.votes.length;
+    const dateStr = s.date ? new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    return `
+    <div class="survey-item" onclick="openSurveyResults('${s.id}')">
+      <div class="survey-meta">
+        <div class="survey-name">${s.name}</div>
+        <div class="survey-details">${s.role} &nbsp;·&nbsp; ${dateStr}</div>
+      </div>
+      <div>
+        <div class="vote-count">${total}</div>
+        <div class="vote-label">vote${total!==1?'s':''}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); reShare('${s.id}')">Link</button>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteSurvey('${s.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function reShare(id) {
+  const link = getBaseUrl() + '?vote=' + id;
+  navigator.clipboard.writeText(link).then(() => alert('Link copied:\n' + link));
+}
+
+function deleteSurvey(id) {
+  if (!confirm('Delete this survey and all its votes?')) return;
+  const surveys = loadSurveys().filter(s => s.id !== id);
+  saveSurveys(surveys);
+  renderSurveys();
+}
+
+function openSurveyResults(id) {
+  showView('results');
+  renderResultsSelector(id);
+}
+
+// ── ADMIN: RESULTS ───────────────────────────────
+function renderResultsSelector(selectId) {
+  const surveys = loadSurveys().sort((a,b) => b.created - a.created);
+  const sel = document.getElementById('results-selector');
+  if (!surveys.length) {
+    sel.innerHTML = '<p class="text-muted">No surveys yet.</p>';
+    document.getElementById('results-content').innerHTML = '';
+    return;
+  }
+  const activeId = selectId || surveys[0].id;
+  sel.innerHTML = `
+    <label>Select Survey</label>
+    <select id="survey-select" onchange="renderResultsContent(this.value)" style="max-width:400px">
+      ${surveys.map(s => `<option value="${s.id}" ${s.id===activeId?'selected':''}>${s.name} — ${s.role}</option>`).join('')}
+    </select>`;
+  renderResultsContent(activeId);
+}
+
+function renderResultsContent(id) {
+  const s = getSurvey(id);
+  if (!s) return;
+  const el = document.getElementById('results-content');
+  const counts = { 'Strong Yes':0, 'Yes':0, 'No':0, 'Strong No':0 };
+  s.votes.forEach(v => { if (counts[v.vote] !== undefined) counts[v.vote]++; });
+  const total = s.votes.length;
+  const dateStr = s.date ? new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '—';
+
+  const pct = (n) => total ? Math.round(n/total*100) : 0;
+  const cls = { 'Strong Yes':'strong-yes','Yes':'yes','No':'no','Strong No':'strong-no' };
+  const chipCls = { 'Strong Yes':'SY','Yes':'Y','No':'N','Strong No':'SN' };
+
+  const bars = Object.entries(counts).map(([label, count]) => `
+    <div class="vote-row">
+      <div class="vote-row-label" style="color: var(--${cls[label]})">${label}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${cls[label]}" style="width:${pct(count)}%">${count > 0 ? count : ''}</div>
+      </div>
+      <div class="bar-num">${count}</div>
+    </div>`).join('');
+
+  const chips = s.votes.length
+    ? s.votes.map(v => `<span class="vote-chip chip-${chipCls[v.vote]}"><b>${v.voter}</b> · ${v.vote}</span>`).join('')
+    : '<span class="text-muted">No votes yet.</span>';
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="results-header">
+        <div>
+          <div class="results-candidate">${s.name}</div>
+          <div class="results-role">${s.role}</div>
+          <div class="results-date">${dateStr}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'DM Mono',monospace; font-size:36px; font-weight:500; color:var(--accent)">${total}</div>
+          <div class="vote-label">total vote${total!==1?'s':''}</div>
+        </div>
+      </div>
+      <div class="vote-bars">${bars}</div>
+      <hr class="divider">
+      <label>Individual Votes</label>
+      <div class="votes-list" style="margin-top:10px">${chips}</div>
+    </div>`;
+}
+
+// ── VOTER VIEW ───────────────────────────────────
+let selectedVoteValue = null;
+
+function initVoterView(id) {
+  const s = getSurvey(id);
+  document.getElementById('admin-shell').style.display = 'none';
+  document.getElementById('voter-view').style.display = 'block';
+
+  if (!s) {
+    document.getElementById('voter-card').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">Survey not found</div>
+        <p>This link may be invalid or the survey has been deleted.</p>
+      </div>`;
+    return;
+  }
+
+  const dateStr = s.date ? new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'}) : '—';
+  document.getElementById('v-candidate').textContent = s.name;
+  document.getElementById('v-role').textContent = s.role;
+  document.getElementById('v-date').textContent = dateStr;
+  document.title = 'Vote: ' + s.name;
+}
+
+function selectVote(value) {
+  selectedVoteValue = value;
+  const map = {'Strong Yes':'v-SY','Yes':'v-Y','No':'v-N','Strong No':'v-SN'};
+  document.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.'+map[value]).classList.add('selected');
+}
+
+function submitVote() {
+  const id = getVoteId();
+  const voterName = document.getElementById('voter-name').value.trim();
+  const msgEl = document.getElementById('vote-msg');
+
+  if (!voterName) {
+    msgEl.innerHTML = '<div class="msg msg-error">Please enter your name before voting.</div>'; return;
+  }
+  if (!selectedVoteValue) {
+    msgEl.innerHTML = '<div class="msg msg-error">Please select a vote option.</div>'; return;
+  }
+
+  const surveys = loadSurveys();
+  const idx = surveys.findIndex(s => s.id === id);
+  if (idx === -1) {
+    msgEl.innerHTML = '<div class="msg msg-error">Survey not found.</div>'; return;
+  }
+
+  // Check duplicate voter
+  if (surveys[idx].votes.some(v => v.voter.toLowerCase() === voterName.toLowerCase())) {
+    msgEl.innerHTML = '<div class="msg msg-error">You have already voted in this survey.</div>'; return;
+  }
+
+  surveys[idx].votes.push({ voter: voterName, vote: selectedVoteValue, ts: Date.now() });
+  saveSurveys(surveys);
+
+  const voteColors = { 'Strong Yes':'#1a6b3c','Yes':'#4a9e6f','No':'#c95f2e','Strong No':'#8b1a1a' };
+  document.getElementById('voter-card').innerHTML = `
+    <div style="padding: 20px 0">
+      <div style="font-size:56px; margin-bottom:16px">✓</div>
+      <p class="voter-eyebrow">Vote submitted</p>
+      <p class="voter-candidate">${surveys[idx].name}</p>
+      <p class="voter-role">${surveys[idx].role}</p>
+      <div style="margin: 24px 0; padding: 16px; background: var(--cream); border-radius: 10px;">
+        <p style="font-size:13px; color:var(--muted); margin-bottom:4px">${voterName}'s vote</p>
+        <p style="font-family:'DM Serif Display',serif; font-size:28px; color:${voteColors[selectedVoteValue]}">${selectedVoteValue}</p>
+      </div>
+      <p style="font-size:13px; color:var(--muted)">Thank you. Your vote has been recorded.</p>
+    </div>`;
+}
+
+// ── INIT ─────────────────────────────────────────
+const voteId = getVoteId();
+if (voteId) {
+  initVoterView(voteId);
+} else {
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('c-date').value = today;
+}
+</script>
+</body>
+</html>
