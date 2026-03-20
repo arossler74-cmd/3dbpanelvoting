@@ -145,6 +145,7 @@ input.error,select.error{border-color:var(--strong-no);}
 .dept-badge{font-size:11px;color:var(--muted);background:var(--cream);padding:3px 10px;border-radius:20px;}
 .user-row{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 18px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);}
 .user-row-email{flex:1;font-size:14px;}
+.user-row-info{flex:1;min-width:0;overflow:hidden;}
 .user-row-role{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
 .role-developer{background:#fef3c7;color:#92400e;}
 .role-superuser{background:#dbeafe;color:#1e40af;}
@@ -212,6 +213,10 @@ input.error,select.error{border-color:var(--strong-no);}
   <div class="auth-card">
     <div class="auth-logo-row"><img class="auth-logo" src="data:image/png;base64,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n0K6PebavS26enDatQUxbURAmkrohiamcfEHxB8WnofQ4IzC0Xq7UmjLyy76Yu9VbKxvQvhfgPHk4dnD0IIVtNpeMundHFb9yLS+N4w03KgZkH1fFnI+LSfgghXdbhu3K0NVTSwWia/WtriWVdujMh5fN0Y94Hz6EeqhyaKSGZ8U0bo5GEhzHgggjuCD2K1v0XrnSGs6FtZpfUdvukTu/sZRztPk5hw5p9CAV21faLVcJBJX2yiqnge66aBryPtBQZA2m2XK71rKK1W+qr6p5w2GmhdK93wDQSVZPYnhS1bervRXjXUP4EtEUrJXUjzmoqGgg8uAfcB7Ek5Ge2VfChoaGgiMVDR09LGe7YYgwfYAuSg+ImMijbHG0NY0BrWgYAA6AAeS+0RBm/x2W+aj4h7pUStcGVtJTTxk+IEYYcfNhUDrVjd3aPRW6FJDFqi3vfUwAiCrgfyTRg9SAfEE+BBUPf8AwWaB9tzf7RX3kznk/F9vLOEFCF63b/bjWuvKwU+ltP1lwbzcr52sLYY/0nnDR8M5WgWiuGTaLTEzKj8AOu9Qwgh9ylMrQR4hnRvyIKky83vS2jbM2W6XG12O3U7MNEkjIY2Adg0dB8AB8EFY9nuDi2UToLluRcPwjKMO/BtI8thB8nvGHOHoMfFWZkdpTQOlTI/8G6fslDH4BsMTAPDHTJPzJPmVXbdfjG0va2TUOgaCW+VYy1tbUMdFTtPmGkB7vmAPiqg7mbk6x3GugrtV3qerDHEw04PLBDn+owdB06Z7nxKCxHEHxaVlzbUae2ydJRUhyyW7uGJZB4iIH8gH+sevljuqmVE0tTPJPUSPllkcXPe92XOJ8ST3K/FEBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERBy7Xca+11jKy2VtRR1LDlssEhY9vwIIKmLRHFBu3pkRxSXuK80zMfirjEJCQPDmGHD7VCSILn6Y43o+VsepdCP5vzprfWgg/CN46f41INo4wto60NNX+Hrbk9RUUIdj1Ps3OWd6INMKfig2VnDS3VrmcxwOeimbj45Z0X6VHE5stA5zXava/A7x0krgfhhvVZlog0XunF5s9SAmlq7xcTjoILe5ufT8YWrwWpuN60xtczTWhq2oJHuy3CrZEAfVjA/P8AiCpKiCfdacWW7GoGvioayhsMDvzaCH38fpvJP2YULagv161DXOrb5dq241DiSX1MxeRnyyenyXVogIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiD/9k=" alt="3DB"><div class="auth-brand">3DB<span style="color:rgba(0,0,0,.2);margin:0 3px">|</span><span>PanelVote</span></div></div>
     <div class="auth-sub">Create your voter account</div>
+    <div style="display:flex;gap:10px;">
+      <div class="auth-field" style="flex:1"><label>First Name</label><input id="vr-firstname" type="text" placeholder="First name"></div>
+      <div class="auth-field" style="flex:1"><label>Last Name</label><input id="vr-lastname" type="text" placeholder="Last name"></div>
+    </div>
     <div class="auth-field"><label>Email</label><input id="vr-email" type="email" placeholder="your@email.com"></div>
     <div class="auth-field"><label>Password</label><input id="vr-password" type="password" placeholder="Min. 6 characters"></div>
     <div class="auth-field"><label>Confirm Password</label><input id="vr-password2" type="password" placeholder="Repeat password"></div>
@@ -401,7 +406,11 @@ onAuthStateChanged(auth,async user=>{
 function showApp(){
   ["auth-signin","auth-voter-register","auth-invite-register"].forEach(s=>document.getElementById(s).classList.remove("show"));
   document.getElementById("app-shell").style.display="block";
-  document.getElementById("user-pill").textContent=currentUser.email;
+  // Show display name in pill if available
+  const upSnap=await get(ref(db,"users/"+currentUser.uid));
+  const upData=upSnap.val()||{};
+  const pillText=upData.firstName?`${upData.firstName} ${upData.lastName?upData.lastName[0]+".":""}`.trim():currentUser.email;
+  document.getElementById("user-pill").textContent=pillText;
   const isVoter=currentRole==="voter";
   const isDev=currentRole==="developer";
   document.getElementById("tab-create").style.display=isVoter?"none":"";
@@ -435,19 +444,22 @@ window.doSignIn=async function(){
 window.doSignOut=async function(){await signOut(auth);currentUser=null;currentRole=null;showScreen("signin");};
 
 window.doVoterRegister=async function(){
+  const firstName=(document.getElementById("vr-firstname")?.value||"").trim();
+  const lastName=(document.getElementById("vr-lastname")?.value||"").trim();
   const email=document.getElementById("vr-email").value.trim();
   const pw=document.getElementById("vr-password").value;
   const pw2=document.getElementById("vr-password2").value;
   const err=document.getElementById("vr-err");
   const btn=document.getElementById("vr-btn");
   err.classList.remove("show");
+  if(!firstName||!lastName){err.textContent="Please enter your first and last name.";err.classList.add("show");return;}
   if(!email||!pw){err.textContent="Please fill in all fields.";err.classList.add("show");return;}
   if(pw!==pw2){err.textContent="Passwords do not match.";err.classList.add("show");return;}
   if(pw.length<6){err.textContent="Password must be at least 6 characters.";err.classList.add("show");return;}
   btn.textContent="Creating account...";btn.disabled=true;
   try{
     const c=await createUserWithEmailAndPassword(auth,email,pw);
-    await set(ref(db,"users/"+c.user.uid),{email,role:"voter",createdAt:Date.now()});
+    await set(ref(db,"users/"+c.user.uid),{email,firstName,lastName,role:"voter",createdAt:Date.now()});
     // Check if there's a pending vote to redirect to
     const pending=sessionStorage.getItem("pendingVote");
     if(pending){
@@ -896,6 +908,21 @@ window.deleteDept=async function(uid,name){
   await remove(ref(db,"departments/"+uid));loadDepartmentsPanel();loadDepartmentOptions();
 };
 
+
+// Helper: format display name as "First L." or fall back to email
+function displayName(u){
+  if(!u)return"Unknown";
+  const f=(u.firstName||"").trim();
+  const l=(u.lastName||"").trim();
+  if(f&&l)return f+" "+l[0]+".";
+  if(f)return f;
+  return u.email||"Unknown";
+}
+function displayNameByEmail(email,usersMap){
+  const u=Object.values(usersMap||{}).find(x=>x.email===email);
+  return u?displayName(u):email;
+}
+
 // USERS
 window.generateInvite=async function(){
   const token=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
@@ -910,11 +937,49 @@ async function loadUsersPanel(){
   const all=snap.val()||{};
   const users=Object.entries(all).sort((a,b)=>a[1].createdAt-b[1].createdAt);
   if(!users.length){el.innerHTML=`<p class="text-muted">No users yet.</p>`;return;}
-  el.innerHTML=users.map(([uid,u])=>`<div class="user-row"><div class="user-row-email">${u.email}</div><span class="user-row-role role-${u.role}">${u.role==="developer"?"👑 Developer":u.role==="superuser"?"🔑 Superuser":"🗳️ Voter"}</span>${u.role!=="developer"?`<button class="btn btn-danger btn-sm" onclick="revokeUser('${uid}','${u.email}')">Revoke</button>`:""}</div>`).join("");
+  el.innerHTML=users.map(([uid,u])=>{
+    const fullName=u.firstName||u.lastName?`<span style="font-weight:600;margin-right:6px;">${u.firstName||""} ${u.lastName||""}</span>`:"";
+    const roleLabel=u.role==="developer"?"👑 Developer":u.role==="superuser"?"🔑 Superuser":"🗳️ Voter";
+    return`<div class="user-row" id="urow-${uid}">
+      <div class="user-row-info" style="flex:1;min-width:0;">
+        <div style="font-size:14px;">${fullName}<span style="color:var(--muted);font-size:13px;">${u.email}</span></div>
+      </div>
+      <span class="user-row-role role-${u.role}">${roleLabel}</span>
+      <button class="btn btn-outline btn-sm" onclick="editUser('${uid}')">Edit</button>
+      ${u.role!=="developer"?`<button class="btn btn-danger btn-sm" onclick="revokeUser('${uid}','${u.email}')">Revoke</button>`:""}
+    </div>`;
+  }).join("");
 }
 window.revokeUser=async function(uid,email){
   if(!confirm(`Revoke access for ${email}?`))return;
   await remove(ref(db,"users/"+uid));loadUsersPanel();
+};
+
+window.editUser=async function(uid){
+  const snap=await get(ref(db,"users/"+uid));
+  const u=snap.val();
+  if(!u)return;
+  const row=document.getElementById("urow-"+uid);
+  const roleOptions=["voter","superuser","developer"].map(r=>`<option value="${r}"${u.role===r?" selected":""}>${r==="developer"?"👑 Developer":r==="superuser"?"🔑 Superuser":"🗳️ Voter"}</option>`).join("");
+  row.innerHTML=`
+    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0;">
+      <input class="dept-edit-input" id="ue-fn-${uid}" placeholder="First name" value="${u.firstName||""}">
+      <input class="dept-edit-input" id="ue-ln-${uid}" placeholder="Last name" value="${u.lastName||""}">
+      <input class="dept-edit-input" id="ue-em-${uid}" placeholder="Email" value="${u.email||""}" style="grid-column:span 2;">
+    </div>
+    <select class="dept-edit-input" id="ue-role-${uid}" style="width:auto;min-width:130px;">${roleOptions}</select>
+    <button class="btn btn-primary btn-sm" onclick="saveUser('${uid}')">Save</button>
+    <button class="btn btn-outline btn-sm" onclick="loadUsersPanel()">Cancel</button>`;
+};
+
+window.saveUser=async function(uid){
+  const firstName=document.getElementById("ue-fn-"+uid).value.trim();
+  const lastName=document.getElementById("ue-ln-"+uid).value.trim();
+  const email=document.getElementById("ue-em-"+uid).value.trim();
+  const role=document.getElementById("ue-role-"+uid).value;
+  if(!email){alert("Email cannot be empty.");return;}
+  await update(ref(db,"users/"+uid),{firstName,lastName,email,role});
+  loadUsersPanel();
 };
 
 // VOTER VIEW
@@ -938,13 +1003,15 @@ async function initVoterView(id){
     const existingVotes=Object.values(s.votes||{});
     if(existingVotes.some(v=>v.voterEmail&&v.voterEmail.toLowerCase()===user.email.toLowerCase())){document.getElementById("voter-card").innerHTML=`<div class="closed-screen"><div class="closed-icon">✅</div><div class="closed-title">Already Voted</div><p class="closed-sub">You have already submitted your vote for <strong>${s.name}</strong>.</p></div>`;return;}
     const ds=s.date?new Date(s.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"long",day:"numeric",year:"numeric"}):"—";
+    const uSnap2=await get(ref(db,"users/"+user.uid));
+    const uData=uSnap2.val()||{};
     document.title="Vote: "+s.name;
     document.getElementById("voter-card").innerHTML=`
       <p class="voter-eyebrow">Interview Panel Vote</p>
       <p class="voter-candidate">${s.name}</p>
       <p class="voter-role-text">${s.role}${s.department?" · "+s.department:""}</p>
       <p class="voter-date">${ds}</p>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${user.email}</strong></p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${displayName({...uData,email:user.email})}</strong></p>
       <div class="vote-buttons">
         <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')"><span class="vote-emoji">🚀</span>Strong Yes<span class="vote-weight">+2 pts</span></button>
         <button class="vote-btn v-Y"  onclick="selectVote('Yes')"><span class="vote-emoji">👍</span>Yes<span class="vote-weight">+1 pt</span></button>
@@ -972,11 +1039,17 @@ window.submitVote=async function(){
   const ev=Object.values(s.votes||{});
   if(ev.some(v=>v.voterEmail&&v.voterEmail.toLowerCase()===user.email.toLowerCase())){msgEl.innerHTML=`<div class="msg msg-error">You have already voted.</div>`;btn.textContent="Submit Vote";btn.disabled=false;return;}
   const vRef=push(ref(db,"surveys/"+currentSurveyId+"/votes"));
-  await set(vRef,{voter:user.email,voterEmail:user.email,vote:selectedVote,ts:Date.now()});
+  // Look up user's name from DB
+  const uSnap=await get(ref(db,"users/"+user.uid));
+  const uData=uSnap.val()||{};
+  const voterDisplayName=displayName({...uData,email:user.email});
+  await set(vRef,{voter:voterDisplayName,voterEmail:user.email,voterUid:user.uid,vote:selectedVote,ts:Date.now()});
   const s2=(await get(ref(db,"surveys/"+currentSurveyId))).val();
+  const uSnap3=await get(ref(db,"users/"+user.uid));
+  const uData2=uSnap3.val()||{};
   const colors={"Strong Yes":"#1a6b3c","Yes":"#4a9e6f","No":"#c95f2e","Strong No":"#8b1a1a"};
   const emojis={"Strong Yes":"🚀","Yes":"👍","No":"👎","Strong No":"🚫"};
-  document.getElementById("voter-card").innerHTML=`<div style="padding:16px 0"><div style="font-size:52px;margin-bottom:14px">✓</div><p class="voter-eyebrow">Vote submitted</p><p class="voter-candidate">${s2.name}</p><p class="voter-role-text">${s2.role}</p><div style="margin:20px 0;padding:14px;background:var(--cream);border-radius:10px"><p style="font-size:13px;color:var(--muted);margin-bottom:4px">${user.email}</p><p style="font-family:'DM Serif Display',serif;font-size:26px;color:${colors[selectedVote]}">${emojis[selectedVote]} ${selectedVote}</p></div><p style="font-size:13px;color:var(--muted)">Thank you. Your vote has been recorded.</p></div>`;
+  document.getElementById("voter-card").innerHTML=`<div style="padding:16px 0"><div style="font-size:52px;margin-bottom:14px">✓</div><p class="voter-eyebrow">Vote submitted</p><p class="voter-candidate">${s2.name}</p><p class="voter-role-text">${s2.role}</p><div style="margin:20px 0;padding:14px;background:var(--cream);border-radius:10px"><p style="font-size:13px;color:var(--muted);margin-bottom:4px">${displayName({...uData2,email:user.email})}</p><p style="font-family:'DM Serif Display',serif;font-size:26px;color:${colors[selectedVote]}">${emojis[selectedVote]} ${selectedVote}</p></div><p style="font-size:13px;color:var(--muted)">Thank you. Your vote has been recorded.</p></div>`;
 };
 
 async function initInviteScreen(){
