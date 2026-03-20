@@ -3,22 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3DB Hiring Panel | Vote</title>
+<title>Panel Vote</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{--ink:#0f0f0f;--paper:#f5f2ec;--cream:#ede9e0;--strong-yes:#1a6b3c;--yes:#4a9e6f;--no:#c95f2e;--strong-no:#8b1a1a;--accent:#2c4a8f;--muted:#7a7570;--border:#d4cfc6;--card:#ffffff;--shadow:0 2px 16px rgba(15,15,15,0.08);--warn:#b45309;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
-  header{background:var(--ink);color:var(--paper);padding:18px 40px;display:flex;align-items:center;justify-content:space-between;}
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;}
+  #auth-screen.show{display:flex;}
+  .auth-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:48px 44px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(15,15,15,0.12);}
+  .auth-brand{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:4px;}
+  .auth-brand span{color:#c8b97a;}
+  .auth-sub{font-size:14px;color:var(--muted);margin-bottom:32px;}
+  .auth-field{margin-bottom:16px;}
+  .auth-field label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .auth-field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--paper);color:var(--ink);outline:none;transition:border-color .2s;}
+  .auth-field input:focus{border-color:var(--accent);}
+  .auth-btn{width:100%;padding:13px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;background:var(--ink);color:var(--paper);margin-top:8px;transition:all .15s;}
+  .auth-btn:hover{background:#2a2a2a;transform:translateY(-1px);}
+  .auth-btn:disabled{background:#888;cursor:not-allowed;transform:none;}
+  .auth-err{background:#f5e8e8;color:var(--strong-no);border-radius:7px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+  .auth-err.show{display:block;}
+  .auth-mode-link{font-size:13px;color:var(--accent);cursor:pointer;text-decoration:underline;margin-top:16px;display:inline-block;}
+
+  /* ── HEADER ── */
+  header{background:var(--ink);color:var(--paper);padding:16px 40px;display:flex;align-items:center;justify-content:space-between;}
   .brand{font-family:'DM Serif Display',serif;font-size:22px;}
   .brand span{color:#c8b97a;}
+  .header-right{display:flex;align-items:center;gap:16px;}
+  .user-pill{font-size:12px;color:#a09888;background:rgba(255,255,255,0.08);padding:5px 12px;border-radius:20px;}
   .nav-tabs{display:flex;gap:4px;}
-  .nav-tab{padding:7px 18px;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:#a09888;border:none;transition:all .2s;}
+  .nav-tab{padding:7px 16px;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:#a09888;border:none;transition:all .2s;}
   .nav-tab.active,.nav-tab:hover{background:rgba(255,255,255,0.1);color:var(--paper);}
-  .view{display:none;padding:40px;max-width:960px;margin:0 auto;}
+  .signout-btn{padding:6px 14px;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;background:rgba(255,255,255,0.08);color:#a09888;border:none;transition:all .2s;}
+  .signout-btn:hover{background:rgba(255,255,255,0.15);color:var(--paper);}
+
+  /* ── VIEWS ── */
+  #app-shell{display:none;}
+  #app-shell.show{display:block;}
+  .view{display:none;padding:40px;max-width:980px;margin:0 auto;}
   .view.active{display:block;}
   .section-title{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:6px;letter-spacing:-0.5px;}
   .section-sub{font-size:14px;color:var(--muted);margin-bottom:32px;}
+
+  /* ── CARDS / FORMS ── */
   .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;box-shadow:var(--shadow);margin-bottom:24px;}
   .form-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
   .form-group{flex:1;min-width:180px;}
@@ -26,90 +56,94 @@
   input,select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--paper);color:var(--ink);outline:none;transition:border-color .2s;}
   input:focus,select:focus{border-color:var(--accent);}
   input.error{border-color:var(--strong-no);}
-  .btn{padding:11px 24px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+
+  /* ── BUTTONS ── */
+  .btn{padding:10px 22px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
   .btn-primary{background:var(--ink);color:var(--paper);}
-  .btn-primary:hover{background:#2a2a2a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+  .btn-primary:hover{background:#2a2a2a;transform:translateY(-1px);}
   .btn-primary:disabled{background:#888;cursor:not-allowed;transform:none;}
   .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border);}
   .btn-outline:hover{border-color:var(--ink);}
   .btn-danger{background:#8b1a1a;color:white;}
-  .btn-close-toggle{background:#7c3aed;color:white;border:none;}
-  .btn-close-toggle:hover{background:#6d28d9;transform:translateY(-1px);}
-  .btn-open-toggle{background:#059669;color:white;border:none;}
-  .btn-open-toggle:hover{background:#047857;transform:translateY(-1px);}
-  .btn-sm{padding:7px 14px;font-size:12px;}
-  .link-box{display:flex;align-items:center;gap:10px;background:var(--cream);border:1px solid var(--border);border-radius:7px;padding:12px 16px;margin-top:16px;}
-  .link-box code{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);flex:1;word-break:break-all;}
+  .btn-close-toggle{background:#7c3aed;color:white;}
+  .btn-close-toggle:hover{background:#6d28d9;}
+  .btn-open-toggle{background:#059669;color:white;}
+  .btn-open-toggle:hover{background:#047857;}
+  .btn-sm{padding:6px 13px;font-size:12px;}
+
+  /* ── MESSAGES ── */
   .msg{padding:12px 16px;border-radius:7px;font-size:13px;margin-top:12px;}
   .msg-success{background:#e8f5ee;color:var(--strong-yes);}
   .msg-error{background:#f5e8e8;color:var(--strong-no);}
-  .dup-warning{background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:20px 24px;margin-bottom:20px;display:none;}
+  .link-box{display:flex;align-items:center;gap:10px;background:var(--cream);border:1px solid var(--border);border-radius:7px;padding:12px 16px;margin-top:12px;}
+  .link-box code{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);flex:1;word-break:break-all;}
+  .dup-warning{background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:18px 22px;margin-bottom:20px;display:none;}
   .dup-warning.show{display:block;}
-  .dup-title{font-weight:600;color:var(--warn);margin-bottom:6px;font-size:14px;}
+  .dup-title{font-weight:600;color:var(--warn);margin-bottom:5px;font-size:14px;}
   .dup-sub{font-size:13px;color:#92400e;}
 
-  /* STATUS PILL */
+  /* ── STATUS & VERDICT ── */
   .status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
   .status-open{background:#d1fae5;color:#065f46;}
   .status-closed{background:#fee2e2;color:#991b1b;}
   .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
   .dot-open{background:#10b981;}
   .dot-closed{background:#ef4444;}
-
-  /* VERDICT BANNER */
-  .verdict-banner{border-radius:12px;padding:20px 28px;margin-bottom:24px;display:flex;align-items:center;gap:18px;}
+  .verdict-banner{border-radius:12px;padding:18px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;}
   .verdict-banner.star{background:linear-gradient(135deg,#fef9e7,#fef3c7);border:2px solid #f59e0b;}
   .verdict-banner.approved{background:linear-gradient(135deg,#e8f5ee,#d1fae5);border:2px solid #10b981;}
   .verdict-banner.manager{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #3b82f6;}
   .verdict-banner.rejected{background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #ef4444;}
   .verdict-banner.pending{background:var(--cream);border:1.5px solid var(--border);}
-  .verdict-emoji{font-size:44px;line-height:1;}
+  .verdict-emoji{font-size:40px;line-height:1;}
   .verdict-text{flex:1;}
-  .verdict-label{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-0.3px;}
+  .verdict-label{font-family:'DM Serif Display',serif;font-size:24px;}
   .verdict-label.star{color:#92400e;}
   .verdict-label.approved{color:var(--strong-yes);}
   .verdict-label.manager{color:#1e40af;}
   .verdict-label.rejected{color:var(--strong-no);}
   .verdict-label.pending{color:var(--muted);}
-  .verdict-score{font-family:'DM Mono',monospace;font-size:13px;margin-top:4px;}
-  .verdict-score.star{color:#b45309;}
-  .verdict-score.approved{color:var(--yes);}
-  .verdict-score.manager{color:#2563eb;}
-  .verdict-score.rejected{color:var(--no);}
-  .verdict-score.pending{color:var(--muted);}
+  .verdict-score{font-family:'DM Mono',monospace;font-size:12px;margin-top:4px;color:var(--muted);}
 
-  /* SURVEY LIST */
-  .survey-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:all .2s;}
-  .survey-item:hover{border-color:var(--accent);transform:translateY(-1px);}
-  .survey-item.is-closed{opacity:0.75;border-style:dashed;}
-  .survey-meta{flex:1;min-width:0;}
-  .survey-name{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:2px;}
+  /* BLIND BANNER (voting open, no results shown) */
+  .blind-banner{background:var(--cream);border:1.5px solid var(--border);border-radius:12px;padding:18px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;}
+  .blind-banner-text{flex:1;}
+  .blind-title{font-weight:600;font-size:15px;color:var(--ink);}
+  .blind-sub{font-size:13px;color:var(--muted);margin-top:3px;}
+
+  /* ── SURVEY LIST ── */
+  .survey-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:all .2s;flex-wrap:wrap;}
+  .survey-item:hover{border-color:var(--accent);}
+  .survey-item.is-closed{border-style:dashed;opacity:.85;}
+  .survey-meta{flex:1;min-width:200px;}
+  .survey-name{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:2px;}
   .survey-details{font-size:12px;color:var(--muted);}
   .survey-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;}
-  .survey-verdict{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+  .survey-verdict{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
   .sv-star{background:#fef3c7;color:#92400e;}
   .sv-approved{background:#d1fae5;color:var(--strong-yes);}
   .sv-manager{background:#dbeafe;color:#1e40af;}
   .sv-rejected{background:#fee2e2;color:var(--strong-no);}
   .sv-pending{background:var(--cream);color:var(--muted);}
-  .vote-count{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--accent);text-align:right;}
-  .vote-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:right;}
+  .vote-count-box{text-align:right;min-width:48px;}
+  .vote-count{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--accent);}
+  .vote-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
 
-  /* RESULTS */
-  .results-candidate{font-family:'DM Serif Display',serif;font-size:32px;}
+  /* ── RESULTS ── */
+  .results-candidate{font-family:'DM Serif Display',serif;font-size:30px;}
   .results-role{font-size:14px;color:var(--muted);margin-top:2px;}
   .results-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;}
-  .vote-bars{display:flex;flex-direction:column;gap:14px;margin:20px 0;}
-  .vote-row{display:flex;align-items:center;gap:14px;}
-  .vote-row-label{width:120px;font-size:13px;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:6px;}
-  .bar-track{flex:1;height:28px;background:var(--cream);border-radius:4px;overflow:hidden;}
+  .vote-bars{display:flex;flex-direction:column;gap:14px;margin:18px 0;}
+  .vote-row{display:flex;align-items:center;gap:12px;}
+  .vote-row-label{width:120px;font-size:13px;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:5px;}
+  .bar-track{flex:1;height:26px;background:var(--cream);border-radius:4px;overflow:hidden;}
   .bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:10px;font-size:12px;font-weight:600;color:white;}
   .bar-fill.strong-yes{background:var(--strong-yes);}
   .bar-fill.yes{background:var(--yes);}
   .bar-fill.no{background:var(--no);}
   .bar-fill.strong-no{background:var(--strong-no);}
-  .bar-num{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;min-width:28px;text-align:right;}
-  .bar-weight{font-size:10px;color:var(--muted);min-width:32px;text-align:right;font-family:'DM Mono',monospace;}
+  .bar-num{font-family:'DM Mono',monospace;font-size:14px;min-width:26px;text-align:right;}
+  .bar-weight{font-size:10px;color:var(--muted);min-width:28px;text-align:right;font-family:'DM Mono',monospace;}
   .votes-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
   .vote-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px;}
   .chip-SY{background:#e8f5ee;color:var(--strong-yes);}
@@ -117,37 +151,50 @@
   .chip-N{background:#fdf0e8;color:var(--no);}
   .chip-SN{background:#f5e8e8;color:var(--strong-no);}
 
-  /* VOTER VIEW */
+  /* VOTERS LIST (blind mode) */
+  .voter-name-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;background:var(--cream);color:var(--ink);border:1px solid var(--border);}
+
+  /* ── SUPERUSER MANAGEMENT ── */
+  .user-row{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);}
+  .user-row-email{flex:1;font-size:14px;}
+  .user-row-role{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
+  .role-developer{background:#fef3c7;color:#92400e;}
+  .role-superuser{background:#dbeafe;color:#1e40af;}
+  .invite-token-box{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-top:16px;}
+
+  /* ── VOTER VIEW ── */
   #voter-view{max-width:600px;margin:60px auto;padding:0 24px;display:none;}
   .voter-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:40px;box-shadow:0 4px 32px rgba(15,15,15,0.1);text-align:center;}
   .voter-eyebrow{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
-  .voter-candidate{font-family:'DM Serif Display',serif;font-size:36px;margin-bottom:4px;}
+  .voter-candidate{font-family:'DM Serif Display',serif;font-size:34px;margin-bottom:4px;}
   .voter-role{font-size:15px;color:var(--muted);margin-bottom:4px;}
   .voter-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--border);margin-bottom:32px;}
   .voter-name-section{margin-bottom:28px;text-align:left;}
-
-  /* CLOSED VOTER SCREEN */
-  .closed-screen{padding:32px 0;}
-  .closed-icon{font-size:64px;margin-bottom:20px;}
-  .closed-title{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:10px;color:var(--strong-no);}
-  .closed-sub{font-size:15px;color:var(--muted);line-height:1.6;}
-
   .vote-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
-  .vote-btn{padding:20px 12px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:2.5px solid transparent;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:6px;}
-  .vote-btn .vote-emoji{font-size:30px;line-height:1;}
-  .vote-btn .vote-weight{font-family:'DM Mono',monospace;font-size:10px;opacity:0.7;margin-top:2px;}
+  .vote-btn{padding:18px 10px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:2.5px solid transparent;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .vote-btn .vote-emoji{font-size:28px;line-height:1;}
+  .vote-btn .vote-weight{font-family:'DM Mono',monospace;font-size:10px;opacity:.7;}
   .vote-btn.v-SY{background:#e8f5ee;color:var(--strong-yes);border-color:#c5e4d0;}
   .vote-btn.v-Y{background:#eef6f2;color:var(--yes);border-color:#cce8da;}
   .vote-btn.v-N{background:#fdf0e8;color:var(--no);border-color:#f5d4bc;}
   .vote-btn.v-SN{background:#f5e8e8;color:var(--strong-no);border-color:#e8c2c2;}
   .vote-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.1);}
   .vote-btn.selected{border-width:3px;transform:scale(1.04);}
-  .vote-btn.v-SY.selected{border-color:var(--strong-yes);box-shadow:0 0 0 3px rgba(26,107,60,0.12);}
-  .vote-btn.v-Y.selected{border-color:var(--yes);box-shadow:0 0 0 3px rgba(74,158,111,0.12);}
-  .vote-btn.v-N.selected{border-color:var(--no);box-shadow:0 0 0 3px rgba(201,95,46,0.12);}
-  .vote-btn.v-SN.selected{border-color:var(--strong-no);box-shadow:0 0 0 3px rgba(139,26,26,0.12);}
+  .vote-btn.v-SY.selected{border-color:var(--strong-yes);}
+  .vote-btn.v-Y.selected{border-color:var(--yes);}
+  .vote-btn.v-N.selected{border-color:var(--no);}
+  .vote-btn.v-SN.selected{border-color:var(--strong-no);}
+  .closed-screen{padding:32px 0;}
+  .closed-icon{font-size:60px;margin-bottom:18px;}
+  .closed-title{font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:10px;color:var(--strong-no);}
+  .closed-sub{font-size:15px;color:var(--muted);line-height:1.6;}
 
-  .divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
+  /* ── REGISTER SCREEN ── */
+  #register-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;}
+  #register-screen.show{display:flex;}
+
+  /* ── MISC ── */
+  .divider{border:none;border-top:1px solid var(--border);margin:22px 0;}
   .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
   .flex-end{display:flex;justify-content:flex-end;gap:10px;}
   .text-muted{color:var(--muted);font-size:13px;}
@@ -157,31 +204,69 @@
   .loading{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
   .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  @media(max-width:640px){header{padding:14px 20px;flex-direction:column;gap:12px;}.view{padding:24px 16px;}.form-row{flex-direction:column;}.vote-buttons{grid-template-columns:1fr;}.voter-card{padding:28px 20px;}.survey-item{flex-wrap:wrap;}}
+  @media(max-width:640px){header{padding:14px 20px;flex-direction:column;gap:10px;}.view{padding:24px 16px;}.form-row{flex-direction:column;}.vote-buttons{grid-template-columns:1fr;}.voter-card{padding:28px 20px;}}
 </style>
 </head>
 <body>
 
-<div id="admin-shell">
+<!-- ══ AUTH SCREEN ══════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">Panel<span>Vote</span></div>
+    <div class="auth-sub" id="auth-sub">Sign in to your account</div>
+    <div class="auth-field"><label>Email</label><input id="auth-email" type="email" placeholder="you@example.com"></div>
+    <div class="auth-field"><label>Password</label><input id="auth-password" type="password" placeholder="••••••••"></div>
+    <button class="auth-btn" id="auth-btn" onclick="doSignIn()">Sign In</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- ══ REGISTER SCREEN (invite link) ════════════════════ -->
+<div id="register-screen">
+  <div class="auth-card">
+    <div class="auth-brand">Panel<span>Vote</span></div>
+    <div class="auth-sub">Create your superuser account</div>
+    <div class="auth-field"><label>Email</label><input id="reg-email" type="email" placeholder="your@email.com"></div>
+    <div class="auth-field"><label>Create Password</label><input id="reg-password" type="password" placeholder="Min. 6 characters"></div>
+    <div class="auth-field"><label>Confirm Password</label><input id="reg-password2" type="password" placeholder="Repeat password"></div>
+    <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+    <div class="auth-err" id="reg-err"></div>
+  </div>
+</div>
+
+<!-- ══ VOTER VIEW ════════════════════════════════════════ -->
+<div id="voter-view">
+  <div class="voter-card" id="voter-card">
+    <div class="loading"><span class="spinner"></span>Loading survey...</div>
+  </div>
+</div>
+
+<!-- ══ APP SHELL ═════════════════════════════════════════ -->
+<div id="app-shell">
   <header>
-    <div class="brand">3DB Panel<span>Vote</span></div>
-    <div class="nav-tabs">
-      <button class="nav-tab active" onclick="showView('create')">New Survey</button>
-      <button class="nav-tab" onclick="showView('surveys')">All Surveys</button>
-      <button class="nav-tab" onclick="showView('results')">Results</button>
+    <div class="brand">Panel<span>Vote</span></div>
+    <div class="header-right">
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showView('create')" id="tab-create">New Survey</button>
+        <button class="nav-tab" onclick="showView('surveys')" id="tab-surveys">All Surveys</button>
+        <button class="nav-tab" onclick="showView('results')" id="tab-results">Results</button>
+        <button class="nav-tab" onclick="showView('users')" id="tab-users" style="display:none">Users</button>
+      </div>
+      <div class="user-pill" id="user-pill"></div>
+      <button class="signout-btn" onclick="doSignOut()">Sign out</button>
     </div>
   </header>
 
-  <!-- CREATE -->
+  <!-- NEW SURVEY -->
   <div class="view active" id="v-create">
     <p class="section-title">Create Interview Survey</p>
-    <p class="section-sub">Building the Most Talented Team</p>
+    <p class="section-sub">Name + Role + Date form a unique key — no duplicates allowed.</p>
     <div class="card">
       <div class="dup-warning" id="dup-warning">
         <div class="dup-title">⚠ Candidate already exists</div>
         <div class="dup-sub" id="dup-sub"></div>
-        <div class="link-box" style="margin-top:12px"><code id="dup-link"></code><button class="btn btn-outline btn-sm" onclick="copyText('dup-link')">Copy Link</button></div>
-        <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="goToExisting()">View Results</button></div>
+        <div class="link-box"><code id="dup-link"></code><button class="btn btn-outline btn-sm" onclick="copyText('dup-link')">Copy Link</button></div>
+        <div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="goToExisting()">View Results</button></div>
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:2"><label>Candidate Name *</label><input id="c-name" type="text" placeholder="e.g. Sarah Johnson" oninput="clearDup()"></div>
@@ -194,39 +279,53 @@
       <div id="link-result" style="display:none">
         <hr class="divider">
         <p style="font-size:13px;font-weight:600;margin-bottom:4px;">Share this link with your panel:</p>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">Everyone uses the same link — each person enters their name before voting.</p>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Everyone uses the same link — each person enters their name before voting.</p>
         <div class="link-box"><code id="generated-link"></code><button class="btn btn-outline btn-sm" onclick="copyText('generated-link')">Copy</button></div>
         <div id="copy-msg" class="msg msg-success" style="display:none">✓ Link copied!</div>
       </div>
     </div>
   </div>
 
-  <!-- SURVEYS -->
+  <!-- ALL SURVEYS -->
   <div class="view" id="v-surveys">
     <p class="section-title">All Surveys</p>
-    <p class="section-sub">Toggle voting open or closed per candidate. Closed surveys still show results.</p>
+    <p class="section-sub">Toggle voting open/closed. Results only shown after closing.</p>
     <div id="surveys-list"><div class="loading"><span class="spinner"></span>Loading...</div></div>
   </div>
 
   <!-- RESULTS -->
   <div class="view" id="v-results">
     <p class="section-title">Results</p>
-    <p class="section-sub">Select a candidate to see the voting breakdown.</p>
+    <p class="section-sub">Results visible only for closed surveys.</p>
     <div style="margin-bottom:24px"><label>Select Candidate</label><select id="survey-select" onchange="renderResultsContent(this.value)" style="max-width:480px"><option>Loading...</option></select></div>
     <div id="results-content"></div>
   </div>
-</div>
 
-<!-- VOTER VIEW -->
-<div id="voter-view">
-  <div class="voter-card" id="voter-card">
-    <div class="loading"><span class="spinner"></span>Loading survey...</div>
+  <!-- USERS (developer only) -->
+  <div class="view" id="v-users">
+    <p class="section-title">User Management</p>
+    <p class="section-sub">Manage superusers and generate invite links.</p>
+    <div class="card">
+      <p style="font-size:15px;font-weight:600;margin-bottom:16px;">Generate Invite Link</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Send this link to someone — they open it and create their own email + password. Link expires after one use.</p>
+      <button class="btn btn-primary" onclick="generateInvite()">Generate Invite Link</button>
+      <div id="invite-result" style="display:none;margin-top:16px">
+        <div class="link-box"><code id="invite-link"></code><button class="btn btn-outline btn-sm" onclick="copyText('invite-link')">Copy</button></div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;">⚠ Single-use only. Share via email.</p>
+      </div>
+    </div>
+    <div class="card">
+      <p style="font-size:15px;font-weight:600;margin-bottom:16px;">Registered Users</p>
+      <div id="users-list"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp }                                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, push, remove, update }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, signOut,
+         createUserWithEmailAndPassword, onAuthStateChanged }     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyA6mEP9bvo38Ml5ja61gkBGE4i1qvoRfEk",
@@ -237,65 +336,175 @@ const app = initializeApp({
   messagingSenderId: "481503855877",
   appId: "1:481503855877:web:5b992d4e55810645d9636c"
 });
-const db = getDatabase(app);
+const db   = getDatabase(app);
+const auth = getAuth(app);
 
-// ── WEIGHTS & VERDICT ─────────────────────────────────────
+// ── CONSTANTS ─────────────────────────────────────────────
+const DEVELOPER_EMAIL = "arossler74@gmail.com";
 const WEIGHTS = {'Strong Yes':2,'Yes':1,'No':-1,'Strong No':-4};
-
-function calcScore(votes) {
-  return votes.reduce((sum,v) => sum+(WEIGHTS[v.vote]||0), 0);
-}
-
-function getVerdict(score, totalVotes) {
-  if (totalVotes===0) return {key:'pending', label:'No votes yet',              emoji:'⏳', scoreText:'Awaiting votes'};
-  if (score>=3)       return {key:'star',    label:'Star Candidate',            emoji:'⭐', scoreText:`Score: +${score}`};
-  if (score>=1)       return {key:'approved',label:'Approved',                  emoji:'✅', scoreText:`Score: +${score}`};
-  if (score===0)      return {key:'manager', label:'Hiring Manager Decision',   emoji:'❓', scoreText:`Score: 0`};
-  return                     {key:'rejected',label:'Rejected',                  emoji:'❌', scoreText:`Score: ${score}`};
-}
-
-function verdictBadgeHtml(verdict) {
-  return `<span class="survey-verdict sv-${verdict.key}">${verdict.emoji} ${verdict.label}</span>`;
-}
-
-function statusPillHtml(isOpen) {
-  return isOpen
-    ? `<span class="status-pill status-open"><span class="status-dot dot-open"></span>Open</span>`
-    : `<span class="status-pill status-closed"><span class="status-dot dot-closed"></span>Closed</span>`;
-}
 
 // ── HELPERS ───────────────────────────────────────────────
 function makeKey(n,r,d){return[n,r,d].map(s=>s.trim().toLowerCase().replace(/\s+/g,' ').replace(/[^a-z0-9 _-]/g,'')).join('__');}
-function getVoteId(){return new URLSearchParams(window.location.search).get('vote');}
+function getParam(p){return new URLSearchParams(window.location.search).get(p);}
 function getBaseUrl(){return window.location.origin+window.location.pathname;}
 function buildLink(id){return getBaseUrl()+'?vote='+id;}
+function buildInviteLink(token){return getBaseUrl()+'?invite='+token;}
+function calcScore(votes){return votes.reduce((s,v)=>s+(WEIGHTS[v.vote]||0),0);}
 
-window.copyText = function(elId) {
+function getVerdict(score,total){
+  if(total===0) return{key:'pending',label:'No votes yet',emoji:'⏳',scoreText:'Awaiting votes'};
+  if(score>=3)  return{key:'star',   label:'Star Candidate',          emoji:'⭐',scoreText:`Score: +${score}`};
+  if(score>=1)  return{key:'approved',label:'Approved',               emoji:'✅',scoreText:`Score: +${score}`};
+  if(score===0) return{key:'manager',label:'Hiring Manager Decision',  emoji:'❓',scoreText:`Score: 0`};
+  return              {key:'rejected',label:'Rejected',                emoji:'❌',scoreText:`Score: ${score}`};
+}
+
+function verdictBadgeHtml(verdict){
+  return`<span class="survey-verdict sv-${verdict.key}">${verdict.emoji} ${verdict.label}</span>`;
+}
+function statusPillHtml(isOpen){
+  return isOpen
+    ?`<span class="status-pill status-open"><span class="status-dot dot-open"></span>Open</span>`
+    :`<span class="status-pill status-closed"><span class="status-dot dot-closed"></span>Closed</span>`;
+}
+
+window.copyText = function(elId){
   navigator.clipboard.writeText(document.getElementById(elId).textContent).then(()=>{
     if(elId==='generated-link'){const m=document.getElementById('copy-msg');m.style.display='block';setTimeout(()=>m.style.display='none',2500);}
+    else if(elId==='invite-link'){alert('Invite link copied! Send it via email.');}
     else alert('Link copied!');
   });
 };
 
-// ── NAV ───────────────────────────────────────────────────
-const VIEWS=['create','surveys','results'];
-window.showView = function(name) {
-  VIEWS.forEach(v=>document.getElementById('v-'+v).classList.toggle('active',v===name));
-  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',VIEWS[i]===name));
-  if(name==='surveys') loadSurveysList();
-  if(name==='results') loadResultsSelector();
+// ── ROUTING ───────────────────────────────────────────────
+const voteId   = getParam('vote');
+const inviteToken = getParam('invite');
+
+// ── AUTH STATE ────────────────────────────────────────────
+let currentUser = null;
+let currentRole = null; // 'developer' | 'superuser'
+
+onAuthStateChanged(auth, async user => {
+  if(voteId || inviteToken) return; // voter / register flows handle themselves
+  if(user){
+    currentUser = user;
+    const snap = await get(ref(db,'users/'+user.uid));
+    const userData = snap.val();
+    if(!userData){
+      // Auto-create developer record if first time
+      if(user.email===DEVELOPER_EMAIL){
+        await set(ref(db,'users/'+user.uid),{email:user.email,role:'developer',createdAt:Date.now()});
+        currentRole='developer';
+      } else {
+        await doSignOut(); return;
+      }
+    } else {
+      currentRole = userData.role;
+    }
+    showApp();
+  } else {
+    showAuthScreen();
+  }
+});
+
+function showAuthScreen(){
+  document.getElementById('auth-screen').classList.add('show');
+  document.getElementById('app-shell').classList.remove('show');
+  document.getElementById('voter-view').style.display='none';
+  document.getElementById('register-screen').classList.remove('show');
+}
+
+function showApp(){
+  document.getElementById('auth-screen').classList.remove('show');
+  document.getElementById('app-shell').classList.add('show');
+  document.getElementById('user-pill').textContent = currentUser.email;
+  // Show Users tab only for developer
+  document.getElementById('tab-users').style.display = currentRole==='developer'?'':'none';
+  document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+}
+
+// ── SIGN IN ───────────────────────────────────────────────
+window.doSignIn = async function(){
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl    = document.getElementById('auth-err');
+  const btn      = document.getElementById('auth-btn');
+  errEl.classList.remove('show');
+  if(!email||!password){errEl.textContent='Please fill in all fields.';errEl.classList.add('show');return;}
+  btn.textContent='Signing in...';btn.disabled=true;
+  try{
+    await signInWithEmailAndPassword(auth,email,password);
+  }catch(e){
+    errEl.textContent = e.code==='auth/invalid-credential'?'Invalid email or password.':e.message;
+    errEl.classList.add('show');
+    btn.textContent='Sign In';btn.disabled=false;
+  }
 };
 
-// ── CREATE ────────────────────────────────────────────────
+window.doSignOut = async function(){
+  await signOut(auth);
+  currentUser=null;currentRole=null;
+  showAuthScreen();
+};
+
+// ── REGISTER (invite flow) ────────────────────────────────
+window.doRegister = async function(){
+  const email  = document.getElementById('reg-email').value.trim();
+  const pass   = document.getElementById('reg-password').value;
+  const pass2  = document.getElementById('reg-password2').value;
+  const errEl  = document.getElementById('reg-err');
+  const btn    = document.getElementById('reg-btn');
+  errEl.classList.remove('show');
+  if(!email||!pass){errEl.textContent='Please fill in all fields.';errEl.classList.add('show');return;}
+  if(pass!==pass2){errEl.textContent='Passwords do not match.';errEl.classList.add('show');return;}
+  if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.classList.add('show');return;}
+
+  // Validate invite token
+  const token = getParam('invite');
+  const tokenSnap = await get(ref(db,'invites/'+token));
+  const tokenData = tokenSnap.val();
+  if(!tokenData||tokenData.used){
+    errEl.textContent='This invite link is invalid or has already been used.';errEl.classList.add('show');return;
+  }
+
+  btn.textContent='Creating account...';btn.disabled=true;
+  try{
+    const cred = await createUserWithEmailAndPassword(auth,email,pass);
+    // Save user record
+    await set(ref(db,'users/'+cred.user.uid),{email,role:'superuser',createdAt:Date.now()});
+    // Mark invite as used
+    await update(ref(db,'invites/'+token),{used:true,usedBy:email,usedAt:Date.now()});
+    // Redirect to app (clear invite param)
+    window.location.href = getBaseUrl();
+  }catch(e){
+    errEl.textContent = e.code==='auth/email-already-in-use'?'This email is already registered.':e.message;
+    errEl.classList.add('show');
+    btn.textContent='Create Account';btn.disabled=false;
+  }
+};
+
+// ── NAV ───────────────────────────────────────────────────
+const VIEWS=['create','surveys','results','users'];
+window.showView = function(name){
+  VIEWS.forEach(v=>document.getElementById('v-'+v).classList.toggle('active',v===name));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  const tab=document.getElementById('tab-'+name);
+  if(tab)tab.classList.add('active');
+  if(name==='surveys') loadSurveysList();
+  if(name==='results') loadResultsSelector();
+  if(name==='users')   loadUsersPanel();
+};
+
+// ── CREATE SURVEY ─────────────────────────────────────────
 let _existingId=null;
-window.clearDup = function() {
+window.clearDup=function(){
   document.getElementById('dup-warning').classList.remove('show');
   document.getElementById('link-result').style.display='none';
   ['c-name','c-role','c-date'].forEach(id=>document.getElementById(id).classList.remove('error'));
   _existingId=null;
 };
 
-window.createSurvey = async function() {
+window.createSurvey=async function(){
   const name=document.getElementById('c-name').value.trim();
   const role=document.getElementById('c-role').value.trim();
   const date=document.getElementById('c-date').value;
@@ -303,49 +512,46 @@ window.createSurvey = async function() {
   if(!name){document.getElementById('c-name').classList.add('error');valid=false;}
   if(!role){document.getElementById('c-role').classList.add('error');valid=false;}
   if(!date){document.getElementById('c-date').classList.add('error');valid=false;}
-  if(!valid) return;
+  if(!valid)return;
   const btn=document.getElementById('create-btn');
-  btn.textContent='Checking...'; btn.disabled=true;
-  try {
+  btn.textContent='Checking...';btn.disabled=true;
+  try{
     const key=makeKey(name,role,date);
     const snap=await get(ref(db,'surveys'));
     const all=snap.val()||{};
     const existing=Object.entries(all).find(([,s])=>s.key===key);
-    if(existing) {
-      const [existId,existData]=existing;
+    if(existing){
+      const[existId,existData]=existing;
       _existingId=existId;
       const dateStr=new Date(existData.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       document.getElementById('dup-sub').textContent=`"${existData.name}" for ${existData.role} on ${dateStr} already exists.`;
       document.getElementById('dup-link').textContent=buildLink(existId);
       document.getElementById('dup-warning').classList.add('show');
       document.getElementById('link-result').style.display='none';
-    } else {
+    }else{
       const newRef=push(ref(db,'surveys'));
       const id=newRef.key;
-      // New surveys start as OPEN (isOpen: true)
-      await set(newRef,{id,key,name,role,date,isOpen:true,votes:{},created:Date.now()});
+      await set(newRef,{id,key,name,role,date,isOpen:true,votes:{},created:Date.now(),createdBy:currentUser.email});
       document.getElementById('generated-link').textContent=buildLink(id);
       document.getElementById('link-result').style.display='block';
       document.getElementById('dup-warning').classList.remove('show');
     }
-  } catch(e){alert('Database error: '+e.message);}
-  btn.textContent='Generate Voting Link →'; btn.disabled=false;
+  }catch(e){alert('Error: '+e.message);}
+  btn.textContent='Generate Voting Link →';btn.disabled=false;
 };
 
-window.goToExisting = function(){if(_existingId){showView('results');loadResultsSelector(_existingId);}};
+window.goToExisting=function(){if(_existingId){showView('results');loadResultsSelector(_existingId);}};
 
-// ── TOGGLE OPEN/CLOSE ─────────────────────────────────────
-window.toggleSurveyStatus = async function(id, currentlyOpen) {
-  const newStatus = !currentlyOpen;
-  await update(ref(db,'surveys/'+id), {isOpen: newStatus});
+// ── TOGGLE STATUS ─────────────────────────────────────────
+window.toggleSurveyStatus=async function(id,currentlyOpen){
+  await update(ref(db,'surveys/'+id),{isOpen:!currentlyOpen});
   loadSurveysList();
-  // Refresh results if visible
-  const sel = document.getElementById('survey-select');
-  if(sel && sel.value===id) renderResultsContent(id);
+  const sel=document.getElementById('survey-select');
+  if(sel&&sel.value===id)renderResultsContent(id);
 };
 
 // ── SURVEYS LIST ──────────────────────────────────────────
-async function loadSurveysList() {
+async function loadSurveysList(){
   const el=document.getElementById('surveys-list');
   el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
   const snap=await get(ref(db,'surveys'));
@@ -358,22 +564,29 @@ async function loadSurveysList() {
   el.innerHTML=surveys.map(s=>{
     const votesList=Object.values(s.votes||{});
     const total=votesList.length;
-    const score=calcScore(votesList);
-    const verdict=getVerdict(score,total);
-    const isOpen=s.isOpen!==false; // default open for legacy
+    const isOpen=s.isOpen!==false;
     const dateStr=s.date?new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
     const toggleLabel=isOpen?'🔒 Close Voting':'🔓 Open Voting';
     const toggleClass=isOpen?'btn-close-toggle':'btn-open-toggle';
-    return `<div class="survey-item${isOpen?'':' is-closed'}">
+
+    // Verdict only shown when closed
+    let verdictBadge='';
+    if(!isOpen){
+      const score=calcScore(votesList);
+      const verdict=getVerdict(score,total);
+      verdictBadge=verdictBadgeHtml(verdict);
+    }
+
+    return`<div class="survey-item${isOpen?'':' is-closed'}">
       <div class="survey-meta">
         <div class="survey-name">${s.name}</div>
         <div class="survey-details">${s.role} · ${dateStr}</div>
         <div class="survey-badges">
           ${statusPillHtml(isOpen)}
-          ${verdictBadgeHtml(verdict)}
+          ${verdictBadge}
         </div>
       </div>
-      <div style="text-align:right;min-width:52px">
+      <div class="vote-count-box">
         <div class="vote-count">${total}</div>
         <div class="vote-label">vote${total!==1?'s':''}</div>
       </div>
@@ -385,16 +598,16 @@ async function loadSurveysList() {
   }).join('');
 }
 
-window.copyShareLink = function(id){navigator.clipboard.writeText(buildLink(id)).then(()=>alert('Link copied!\n\n'+buildLink(id)));};
-window.openResults = function(id){showView('results');loadResultsSelector(id);};
-window.deleteSurvey = async function(id,name,total){
-  if(!confirm(`Delete "${name}" and all ${total} votes? Cannot be undone.`)) return;
+window.copyShareLink=function(id){navigator.clipboard.writeText(buildLink(id)).then(()=>alert('Link copied!\n\n'+buildLink(id)));};
+window.openResults=function(id){showView('results');loadResultsSelector(id);};
+window.deleteSurvey=async function(id,name,total){
+  if(!confirm(`Delete "${name}" and all ${total} votes? Cannot be undone.`))return;
   await remove(ref(db,'surveys/'+id));
   loadSurveysList();
 };
 
 // ── RESULTS ───────────────────────────────────────────────
-async function loadResultsSelector(selectId) {
+async function loadResultsSelector(selectId){
   const snap=await get(ref(db,'surveys'));
   const all=snap.val()||{};
   const surveys=Object.values(all).sort((a,b)=>b.created-a.created);
@@ -408,27 +621,67 @@ async function loadResultsSelector(selectId) {
   renderResultsContent(activeId);
 }
 
-window.renderResultsContent = async function(id) {
-  document.getElementById('results-content').innerHTML='<div class="loading"><span class="spinner"></span>Loading results...</div>';
+window.renderResultsContent=async function(id){
+  document.getElementById('results-content').innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
   const snap=await get(ref(db,'surveys/'+id));
   const s=snap.val();
   if(!s){document.getElementById('results-content').innerHTML='<p class="text-muted">Not found.</p>';return;}
 
   const votesList=Object.values(s.votes||{}).sort((a,b)=>a.ts-b.ts);
-  const counts={'Strong Yes':0,'Yes':0,'No':0,'Strong No':0};
-  votesList.forEach(v=>{if(counts[v.vote]!==undefined)counts[v.vote]++;});
   const total=votesList.length;
-  const score=calcScore(votesList);
-  const verdict=getVerdict(score,total);
   const isOpen=s.isOpen!==false;
   const dateStr=s.date?new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'—';
-  const pct=n=>total?Math.round(n/total*100):0;
-  const cls={'Strong Yes':'strong-yes','Yes':'yes','No':'no','Strong No':'strong-no'};
-  const chipCls={'Strong Yes':'SY','Yes':'Y','No':'N','Strong No':'SN'};
-  const emojis={'Strong Yes':'🚀','Yes':'👍','No':'👎','Strong No':'🚫'};
-  const weightLabels={'Strong Yes':'+2','Yes':'+1','No':'-1','Strong No':'-4'};
   const toggleLabel=isOpen?'🔒 Close Voting':'🔓 Open Voting';
   const toggleClass=isOpen?'btn-close-toggle':'btn-open-toggle';
+  const emojis={'Strong Yes':'🚀','Yes':'👍','No':'👎','Strong No':'🚫'};
+  const chipCls={'Strong Yes':'SY','Yes':'Y','No':'N','Strong No':'SN'};
+
+  // ── OPEN: blind mode — show voter names only, no counts/bars ──
+  if(isOpen){
+    const voterChips=votesList.length
+      ?votesList.map(v=>`<span class="voter-name-chip">👤 ${v.voter}</span>`).join('')
+      :'<span class="text-muted">No votes yet.</span>';
+
+    document.getElementById('results-content').innerHTML=`
+      <div class="card">
+        <div class="blind-banner">
+          <div style="font-size:36px">🙈</div>
+          <div class="blind-banner-text">
+            <div class="blind-title">Voting in progress — results hidden</div>
+            <div class="blind-sub">Results will be revealed once you close voting. This prevents bias during the process.</div>
+          </div>
+        </div>
+        <div class="flex-between" style="margin-bottom:20px">
+          <div>
+            <div class="results-candidate">${s.name}</div>
+            <div class="results-role">${s.role}</div>
+            <div class="results-date">${dateStr}</div>
+            <div style="margin-top:8px">${statusPillHtml(true)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'DM Mono',monospace;font-size:40px;font-weight:500;color:var(--accent);line-height:1">${total}</div>
+            <div class="vote-label">voted so far</div>
+            <button class="btn ${toggleClass} btn-sm" style="margin-top:10px" onclick="toggleSurveyStatus('${id}',true)">${toggleLabel}</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <label style="margin-bottom:10px;display:block">Who has voted</label>
+        <div class="votes-list">${voterChips}</div>
+        <hr class="divider">
+        <label style="margin-bottom:8px;display:block">Voting Link</label>
+        <div class="link-box"><code id="result-link">${buildLink(id)}</code><button class="btn btn-outline btn-sm" onclick="copyText('result-link')">Copy</button></div>
+      </div>`;
+    return;
+  }
+
+  // ── CLOSED: full results ──
+  const counts={'Strong Yes':0,'Yes':0,'No':0,'Strong No':0};
+  votesList.forEach(v=>{if(counts[v.vote]!==undefined)counts[v.vote]++;});
+  const score=calcScore(votesList);
+  const verdict=getVerdict(score,total);
+  const pct=n=>total?Math.round(n/total*100):0;
+  const cls={'Strong Yes':'strong-yes','Yes':'yes','No':'no','Strong No':'strong-no'};
+  const weightLabels={'Strong Yes':'+2','Yes':'+1','No':'-1','Strong No':'-4'};
 
   const bars=Object.entries(counts).map(([label,count])=>`
     <div class="vote-row">
@@ -448,25 +701,25 @@ window.renderResultsContent = async function(id) {
         <div class="verdict-emoji">${verdict.emoji}</div>
         <div class="verdict-text">
           <div class="verdict-label ${verdict.key}">${verdict.label}</div>
-          <div class="verdict-score ${verdict.key}">${verdict.scoreText} · ${total} vote${total!==1?'s':''} · Weights: 🚀+2 👍+1 👎-1 🚫-4</div>
+          <div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?'s':''} · Weights: 🚀+2 👍+1 👎-1 🚫-4</div>
         </div>
       </div>
-      <div class="flex-between" style="margin-bottom:20px">
+      <div class="flex-between" style="margin-bottom:18px">
         <div>
           <div class="results-candidate">${s.name}</div>
           <div class="results-role">${s.role}</div>
           <div class="results-date">${dateStr}</div>
-          <div style="margin-top:8px">${statusPillHtml(isOpen)}</div>
+          <div style="margin-top:8px">${statusPillHtml(false)}</div>
         </div>
         <div style="text-align:right">
           <div style="font-family:'DM Mono',monospace;font-size:40px;font-weight:500;color:var(--accent);line-height:1">${total}</div>
           <div class="vote-label">total votes</div>
-          <button class="btn ${toggleClass} btn-sm" style="margin-top:10px" onclick="toggleSurveyStatus('${id}',${isOpen})">${toggleLabel}</button>
+          <button class="btn ${toggleClass} btn-sm" style="margin-top:10px" onclick="toggleSurveyStatus('${id}',false)">${toggleLabel}</button>
         </div>
       </div>
       <div class="vote-bars">${bars}</div>
       <hr class="divider">
-      <div style="margin-bottom:10px"><label>Individual Votes</label></div>
+      <label style="margin-bottom:10px;display:block">Individual Votes</label>
       <div class="votes-list">${chips}</div>
       <hr class="divider">
       <label style="margin-bottom:8px;display:block">Voting Link</label>
@@ -474,21 +727,52 @@ window.renderResultsContent = async function(id) {
     </div>`;
 };
 
-// ── VOTER VIEW ────────────────────────────────────────────
-let selectedVoteValue=null, currentSurveyId=null;
+// ── USERS PANEL ───────────────────────────────────────────
+window.generateInvite=async function(){
+  const token=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+  await set(ref(db,'invites/'+token),{createdBy:currentUser.email,createdAt:Date.now(),used:false});
+  document.getElementById('invite-link').textContent=buildInviteLink(token);
+  document.getElementById('invite-result').style.display='block';
+};
 
-async function initVoterView(id) {
+async function loadUsersPanel(){
+  const el=document.getElementById('users-list');
+  el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const snap=await get(ref(db,'users'));
+  const all=snap.val()||{};
+  const users=Object.entries(all).sort((a,b)=>a[1].createdAt-b[1].createdAt);
+  if(!users.length){el.innerHTML='<p class="text-muted">No users yet.</p>';return;}
+  el.innerHTML=users.map(([uid,u])=>`
+    <div class="user-row">
+      <div class="user-row-email">${u.email}</div>
+      <span class="user-row-role role-${u.role}">${u.role==='developer'?'👑 Developer':'🔑 Superuser'}</span>
+      ${u.role!=='developer'?`<button class="btn btn-danger btn-sm" onclick="revokeUser('${uid}','${u.email}')">Revoke</button>`:''}
+    </div>`).join('');
+}
+
+window.revokeUser=async function(uid,email){
+  if(!confirm(`Revoke access for ${email}? They will no longer be able to sign in.`))return;
+  await remove(ref(db,'users/'+uid));
+  // Also delete their Firebase Auth account via admin — we just remove DB record
+  // (they can't access the app without a DB record)
+  loadUsersPanel();
+};
+
+// ── VOTER VIEW ────────────────────────────────────────────
+let selectedVoteValue=null,currentSurveyId=null;
+
+async function initVoterView(id){
   currentSurveyId=id;
-  document.getElementById('admin-shell').style.display='none';
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('auth-screen').classList.remove('show');
+  document.getElementById('register-screen').classList.remove('show');
   document.getElementById('voter-view').style.display='block';
   const snap=await get(ref(db,'surveys/'+id));
   const s=snap.val();
   if(!s){
-    document.getElementById('voter-card').innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Survey not found</div><p>This link may be invalid or the survey was deleted.</p></div>`;
+    document.getElementById('voter-card').innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Survey not found</div><p>This link may be invalid or was deleted.</p></div>`;
     return;
   }
-
-  // CLOSED — block voting
   if(s.isOpen===false){
     document.getElementById('voter-card').innerHTML=`
       <div class="closed-screen">
@@ -498,7 +782,6 @@ async function initVoterView(id) {
       </div>`;
     return;
   }
-
   const dateStr=s.date?new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'}):'—';
   document.title='Vote: '+s.name;
   document.getElementById('voter-card').innerHTML=`
@@ -517,54 +800,41 @@ async function initVoterView(id) {
     <div id="vote-msg"></div>`;
 }
 
-window.selectVote = function(value){
+window.selectVote=function(value){
   selectedVoteValue=value;
   const map={'Strong Yes':'v-SY','Yes':'v-Y','No':'v-N','Strong No':'v-SN'};
   document.querySelectorAll('.vote-btn').forEach(b=>b.classList.remove('selected'));
   document.querySelector('.'+map[value]).classList.add('selected');
 };
 
-window.submitVote = async function(){
+window.submitVote=async function(){
   const voterName=document.getElementById('voter-name').value.trim();
   const msgEl=document.getElementById('vote-msg');
   if(!voterName){msgEl.innerHTML='<div class="msg msg-error">Please enter your name.</div>';return;}
   if(!selectedVoteValue){msgEl.innerHTML='<div class="msg msg-error">Please select a vote.</div>';return;}
   const btn=document.getElementById('submit-vote-btn');
-  btn.textContent='Submitting...'; btn.disabled=true;
-
-  // Re-check status before submitting (in case closed while voter was on page)
+  btn.textContent='Submitting...';btn.disabled=true;
+  // Re-check closed status
   const snapCheck=await get(ref(db,'surveys/'+currentSurveyId));
   const sCheck=snapCheck.val();
-  if(sCheck && sCheck.isOpen===false){
-    document.getElementById('voter-card').innerHTML=`
-      <div class="closed-screen">
-        <div class="closed-icon">🔒</div>
-        <div class="closed-title">Voting is Closed</div>
-        <p class="closed-sub">The voting period for <strong>${sCheck.name}</strong> has just been closed.<br>No further votes are being accepted.</p>
-      </div>`;
+  if(sCheck&&sCheck.isOpen===false){
+    document.getElementById('voter-card').innerHTML=`<div class="closed-screen"><div class="closed-icon">🔒</div><div class="closed-title">Voting is Closed</div><p class="closed-sub">The voting period has just ended. No further votes are accepted.</p></div>`;
     return;
   }
-
-  // Check duplicate voter
+  // Check duplicate
   const snapVotes=await get(ref(db,'surveys/'+currentSurveyId+'/votes'));
   const existing=snapVotes.val()||{};
   if(Object.values(existing).some(v=>v.voter.toLowerCase()===voterName.toLowerCase())){
     msgEl.innerHTML='<div class="msg msg-error">You have already voted for this candidate.</div>';
-    btn.textContent='Submit Vote'; btn.disabled=false;
+    btn.textContent='Submit Vote';btn.disabled=false;
     return;
   }
-
   const voteRef=push(ref(db,'surveys/'+currentSurveyId+'/votes'));
   await set(voteRef,{voter:voterName,vote:selectedVoteValue,ts:Date.now()});
-
   const snap2=await get(ref(db,'surveys/'+currentSurveyId));
   const s=snap2.val();
-  const votesList=Object.values(s.votes||{});
-  const score=calcScore(votesList);
-  const verdict=getVerdict(score,votesList.length);
   const colors={'Strong Yes':'#1a6b3c','Yes':'#4a9e6f','No':'#c95f2e','Strong No':'#8b1a1a'};
   const emojis={'Strong Yes':'🚀','Yes':'👍','No':'👎','Strong No':'🚫'};
-
   document.getElementById('voter-card').innerHTML=`
     <div style="padding:20px 0">
       <div style="font-size:56px;margin-bottom:16px">✓</div>
@@ -575,19 +845,32 @@ window.submitVote = async function(){
         <p style="font-size:13px;color:var(--muted);margin-bottom:4px">${voterName}'s vote</p>
         <p style="font-family:'DM Serif Display',serif;font-size:28px;color:${colors[selectedVoteValue]}">${emojis[selectedVoteValue]} ${selectedVoteValue}</p>
       </div>
-      <div style="padding:14px 20px;background:var(--cream);border-radius:10px;margin-bottom:16px">
-        <p style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Current panel verdict</p>
-        <p style="font-family:'DM Serif Display',serif;font-size:22px">${verdict.emoji} ${verdict.label}</p>
-        <p style="font-size:12px;color:var(--muted);margin-top:2px">${verdict.scoreText} · ${votesList.length} vote${votesList.length!==1?'s':''}</p>
-      </div>
       <p style="font-size:13px;color:var(--muted)">Thank you. Your vote has been recorded.</p>
     </div>`;
 };
 
+// ── INVITE REGISTER FLOW ──────────────────────────────────
+async function initRegisterScreen(){
+  const token=getParam('invite');
+  const snap=await get(ref(db,'invites/'+token));
+  const data=snap.val();
+  document.getElementById('register-screen').classList.add('show');
+  if(!data||data.used){
+    document.getElementById('register-screen').innerHTML=`
+      <div class="auth-card">
+        <div class="auth-brand">Panel<span>Vote</span></div>
+        <div class="auth-sub" style="color:var(--strong-no);margin-top:12px">⚠ This invite link is invalid or has already been used.</div>
+      </div>`;
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────
-const voteId=getVoteId();
-if(voteId){initVoterView(voteId);}
-else{document.getElementById('c-date').value=new Date().toISOString().split('T')[0];}
+if(voteId){
+  initVoterView(voteId);
+} else if(inviteToken){
+  initRegisterScreen();
+}
+// Auth state listener handles the rest
 </script>
 </body>
 </html>
