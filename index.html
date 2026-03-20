@@ -399,11 +399,11 @@ onAuthStateChanged(auth,async user=>{
       if(user.email===DEV_EMAIL){await set(ref(db,"users/"+user.uid),{email:user.email,role:"developer",createdAt:Date.now()});currentRole="developer";}
       else{await signOut(auth);showScreen("signin");return;}
     }else{currentRole=data.role;}
-    showApp();
+    await showApp();
   }else{showScreen("signin");}
 });
 
-function showApp(){
+async function showApp(){
   ["auth-signin","auth-voter-register","auth-invite-register"].forEach(s=>document.getElementById(s).classList.remove("show"));
   document.getElementById("app-shell").style.display="block";
   // Show display name in pill if available
