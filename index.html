@@ -420,7 +420,16 @@ window.doSignIn=async function(){
   err.classList.remove("show");
   if(!email||!pw){err.textContent="Please fill in all fields.";err.classList.add("show");return;}
   btn.textContent="Signing in...";btn.disabled=true;
-  try{await signInWithEmailAndPassword(auth,email,pw);}
+  try{
+    await signInWithEmailAndPassword(auth,email,pw);
+    // After sign in, check if there's a pending vote
+    const pending=sessionStorage.getItem("pendingVote");
+    if(pending){
+      sessionStorage.removeItem("pendingVote");
+      window.location.href=getBaseUrl()+"?vote="+pending;
+    }
+    // Otherwise onAuthStateChanged handles the redirect to dashboard
+  }
   catch(e){err.textContent=e.code==="auth/invalid-credential"?"Invalid email or password.":e.message;err.classList.add("show");btn.textContent="Sign In";btn.disabled=false;}
 };
 window.doSignOut=async function(){await signOut(auth);currentUser=null;currentRole=null;showScreen("signin");};
@@ -436,7 +445,20 @@ window.doVoterRegister=async function(){
   if(pw!==pw2){err.textContent="Passwords do not match.";err.classList.add("show");return;}
   if(pw.length<6){err.textContent="Password must be at least 6 characters.";err.classList.add("show");return;}
   btn.textContent="Creating account...";btn.disabled=true;
-  try{const c=await createUserWithEmailAndPassword(auth,email,pw);await set(ref(db,"users/"+c.user.uid),{email,role:"voter",createdAt:Date.now()});}
+  try{
+    const c=await createUserWithEmailAndPassword(auth,email,pw);
+    await set(ref(db,"users/"+c.user.uid),{email,role:"voter",createdAt:Date.now()});
+    // Check if there's a pending vote to redirect to
+    const pending=sessionStorage.getItem("pendingVote");
+    if(pending){
+      sessionStorage.removeItem("pendingVote");
+      window.location.href=getBaseUrl()+"?vote="+pending;
+    } else {
+      // onAuthStateChanged will fire and call showApp()
+      // but we need to handle it — just reload to be safe
+      window.location.href=getBaseUrl();
+    }
+  }
   catch(e){err.textContent=e.code==="auth/email-already-in-use"?"Email already registered.":e.message;err.classList.add("show");btn.textContent="Create Account";btn.disabled=false;}
 };
 
@@ -712,8 +734,15 @@ function drawDashCharts(surveys){
   surveys.forEach(s=>{
     const dept=s.department||"No Dept";
     if(!byDept[dept])byDept[dept]={star:0,approved:0,manager:0,rejected:0,pending:0,open:0};
-    if(s.isOpen!==false){const vl=Object.values(s.votes||{});const k=getVerdict(calcScore(vl),vl.length).key;byDept[dept][k]=(byDept[dept][k]||0)+1;}
-    else byDept[dept].open++;
+    if(s.isOpen===false){
+      // Closed — count by verdict
+      const vl=Object.values(s.votes||{});
+      const k=getVerdict(calcScore(vl),vl.length).key;
+      byDept[dept][k]=(byDept[dept][k]||0)+1;
+    } else {
+      // Open — count as open
+      byDept[dept].open++;
+    }
   });
   const deptLabels=Object.keys(byDept);
 
