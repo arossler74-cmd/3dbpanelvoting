@@ -185,6 +185,34 @@ input.error,select.error{border-color:var(--strong-no);}
 .loading{text-align:center;padding:36px;color:var(--muted);font-size:14px;}
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg);}}
+.comment-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);}
+.comment-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.comment-voter{font-size:13px;font-weight:600;color:var(--ink);}
+.comment-vote-pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;}
+.comment-text{font-size:13px;color:var(--muted);line-height:1.6;}
+.aa-section{margin-bottom:20px;}
+.aa-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.aa-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden;}
+.aa-main{display:flex;align-items:center;gap:10px;padding:12px 16px;}
+.aa-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;flex-shrink:0;}
+.aa-b1{background:#EAF3DE;color:#27500A;}.aa-b2{background:#E6F1FB;color:#0C447C;}
+.aa-b3{background:#FAEEDA;color:#633806;}.aa-b4{background:#EEEDFE;color:#3C3489;}
+.aa-name{font-size:13px;font-weight:600;color:var(--ink);width:96px;flex-shrink:0;}
+.aa-sub{font-size:12px;color:var(--muted);flex:1;}
+.aa-stars{display:flex;gap:3px;flex-shrink:0;}
+.aa-star{width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .1s;}
+.aa-star:hover{transform:scale(1.25);}
+.aa-guide-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted);padding:0 0 0 6px;display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0;}
+.aa-guide-btn:hover{color:var(--ink);}
+.aa-chevron{display:inline-block;transition:transform .2s;font-size:10px;}
+.aa-chevron.open{transform:rotate(180deg);}
+.aa-detail{border-top:1px solid var(--border);padding:12px 16px;background:#fafaf8;display:none;}
+.aa-detail.open{display:block;}
+.aa-signal{display:flex;gap:7px;margin-bottom:6px;align-items:flex-start;}
+.aa-signal:last-child{margin-bottom:0;}
+.aa-sig-badge{font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;flex-shrink:0;margin-top:1px;}
+.aa-sig-s{background:#d1fae5;color:#065f46;}.aa-sig-w{background:#fef3c7;color:#92400e;}.aa-sig-r{background:#fee2e2;color:#991b1b;}
+.aa-sig-text{font-size:12px;color:var(--muted);line-height:1.5;}
 .aa-results-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
 .aa-results-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;flex-shrink:0;width:28px;text-align:center;}
 .aa-results-name{font-size:13px;font-weight:600;color:var(--ink);width:92px;flex-shrink:0;}
@@ -193,45 +221,16 @@ input.error,select.error{border-color:var(--strong-no);}
 .aa-r-b1{background:#639922;}.aa-r-b2{background:#378ADD;}.aa-r-b3{background:#BA7517;}.aa-r-b4{background:#7F77DD;}
 .aa-results-score{font-family:"DM Mono",monospace;font-size:13px;font-weight:500;color:var(--ink);width:28px;text-align:right;flex-shrink:0;}
 .aa-results-tag{font-size:11px;width:76px;text-align:right;flex-shrink:0;}
-background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);}
-.comment-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
-.comment-voter{font-size:13px;font-weight:600;color:var(--ink);}
-.comment-vote-pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;}
-.comment-text{font-size:13px;color:var(--muted);line-height:1.6;}
-
-.aa-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(–muted);margin-bottom:10px;}
-.aa-card{background:var(–card);border:1px solid var(–border);border-radius:10px;margin-bottom:6px;overflow:hidden;}
-.aa-main{display:flex;align-items:center;gap:10px;padding:12px 16px;}
-.aa-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;flex-shrink:0;}
-.aa-b1{background:#EAF3DE;color:#27500A;}.aa-b2{background:#E6F1FB;color:#0C447C;}
-.aa-b3{background:#FAEEDA;color:#633806;}.aa-b4{background:#EEEDFE;color:#3C3489;}
-.aa-name{font-size:13px;font-weight:600;color:var(–ink);width:96px;flex-shrink:0;}
-.aa-sub{font-size:12px;color:var(–muted);flex:1;}
-.aa-stars{display:flex;gap:3px;flex-shrink:0;}
-.aa-star{width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .1s;}
-.aa-star:hover{transform:scale(1.25);}
-.aa-guide-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(–muted);padding:0 0 0 6px;display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0;}
-.aa-guide-btn:hover{color:var(–ink);}
-.aa-chevron{display:inline-block;transition:transform .2s;font-size:10px;}
-.aa-chevron.open{transform:rotate(180deg);}
-.aa-detail{border-top:1px solid var(–border);padding:12px 16px;background:#fafaf8;display:none;}
-.aa-detail.open{display:block;}
-.aa-signal{display:flex;gap:7px;margin-bottom:6px;align-items:flex-start;}
-.aa-signal:last-child{margin-bottom:0;}
-.aa-sig-badge{font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;flex-shrink:0;margin-top:1px;}
-.aa-sig-s{background:#d1fae5;color:#065f46;}.aa-sig-w{background:#fef3c7;color:#92400e;}.aa-sig-r{background:#fee2e2;color:#991b1b;}
-.aa-sig-text{font-size:12px;color:var(–muted);line-height:1.5;}
-
-header{padding:8px 16px;height:auto;flex-wrap:wrap;gap:6px;}
-.nav-tab{padding:5px 10px;font-size:12px;}
-.view{padding:20px 16px;}
-.vote-buttons{grid-template-columns:1fr;}
-.voter-card{padding:24px 16px;}
-.dash-charts-row{grid-template-columns:1fr;}
-.user-pill{display:none;}
+@media(max-width:700px){
+  header{padding:8px 16px;height:auto;flex-wrap:wrap;gap:6px;}
+  .nav-tab{padding:5px 10px;font-size:12px;}
+  .view{padding:20px 16px;}
+  .vote-buttons{grid-template-columns:1fr;}
+  .voter-card{padding:24px 16px;}
+  .dash-charts-row{grid-template-columns:1fr;}
+  .user-pill{display:none;}
 }
 </style>
-
 </head>
 <body>
 
@@ -675,38 +674,7 @@ window.renderResultsContent=async function(id){
   const wt={"Strong Yes":"+2","Yes":"+1","No":"-1","Strong No":"-4"};
   const bars=Object.entries(counts).map(([label,count])=>`<div class="vote-row"><div class="vote-row-label" style="color:var(--${cls[label]})">${emojis[label]} ${label}</div><div class="bar-track"><div class="bar-fill ${cls[label]}" style="width:${pct(count)}%">${count>0?count:""}</div></div><div class="bar-num">${count}</div><div class="bar-weight">${wt[label]}</div></div>`).join("");
   const chips=vl.length?vl.map(v=>`<span class="vote-chip chip-${chipCls[v.vote]}">${emojis[v.vote]} <b>${v.voter}</b> · ${v.vote}</span>`).join(""):`<span class="text-muted">No votes yet.</span>`;
-
-  // 4A dimension averages
-  const aaDims=[
-    {key:"a1",label:"Achievement",barCls:"aa-r-b1",badgeCls:"aa-b1",badge:"A1"},
-    {key:"a2",label:"Acumen",     barCls:"aa-r-b2",badgeCls:"aa-b2",badge:"A2"},
-    {key:"a3",label:"Ambition",   barCls:"aa-r-b3",badgeCls:"aa-b3",badge:"A3"},
-    {key:"a4",label:"Alignment",  barCls:"aa-r-b4",badgeCls:"aa-b4",badge:"A4"}
-  ];
-  const aaTag=s=>{if(s>=4.5)return{text:"Exceptional",col:"#1a6b3c"};if(s>=3.5)return{text:"Strong",col:"#4a9e6f"};if(s>=2.5)return{text:"Meets bar",col:"#2c4a8f"};if(s>=1.5)return{text:"Below bar",col:"#c95f2e"};return{text:"Concern ⚠",col:"#8b1a1a"};};
-  const votesWithStars=vl.filter(v=>v.aaStars);
-  const aaHtml=aaDims.map(d=>{
-    const scores=votesWithStars.map(v=>v.aaStars[d.key]||0).filter(n=>n>0);
-    if(!scores.length)return`<div class="aa-results-row"><span class="aa-results-badge ${d.badgeCls}">${d.badge}</span><span class="aa-results-name">${d.label}</span><div class="aa-results-bar-wrap"></div><span class="aa-results-score" style="color:var(--muted)">—</span><span class="aa-results-tag" style="color:var(--muted)">No data</span></div>`;
-    const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
-    const tag=aaTag(avg);
-    return`<div class="aa-results-row"><span class="aa-results-badge ${d.badgeCls}">${d.badge}</span><span class="aa-results-name">${d.label}</span><div class="aa-results-bar-wrap"><div class="aa-results-bar ${d.barCls}" style="width:${Math.round(avg/5*100)}%"></div></div><span class="aa-results-score">${avg.toFixed(1)}</span><span class="aa-results-tag" style="color:${tag.col}">${tag.text}</span></div>`;
-  }).join("");
-  const aaSection=votesWithStars.length
-    ?`<hr class="divider"><label style="margin-bottom:12px;display:block">4A dimension scores <span style="font-weight:400;font-size:11px;color:var(--muted)">(avg across ${votesWithStars.length} voter${votesWithStars.length!==1?"s":""})</span></label>${aaHtml}`
-    :`<hr class="divider"><label style="margin-bottom:8px;display:block">4A dimension scores</label><p class="text-muted" style="font-size:13px;">No dimension ratings were submitted.</p>`;
-  const commentBgMap={"Strong Yes":"#e8f5ee","Yes":"#eef6f2","No":"#fdf0e8","Strong No":"#f5e8e8"};
-  const commentColMap={"Strong Yes":"var(--strong-yes)","Yes":"var(--yes)","No":"var(--no)","Strong No":"var(--strong-no)"};
-  const withNotes=vl.filter(v=>v.notes&&v.notes.trim());
-  const commentsHtml=withNotes.length?withNotes.map(v=>`
-    <div class="comment-card">
-      <div class="comment-header">
-        <span class="comment-voter">${v.voter}</span>
-        <span class="comment-vote-pill" style="background:${commentBgMap[v.vote]};color:${commentColMap[v.vote]}">${emojis[v.vote]} ${v.vote}</span>
-      </div>
-      <div class="comment-text">${v.notes.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
-    </div>`).join(""):`<p class="text-muted" style="font-size:13px;">No comments were left by voters.</p>`;
-  document.getElementById("results-content").innerHTML=`<div class="card"><div class="verdict-banner ${verdict.key}"><div class="verdict-emoji">${verdict.emoji}</div><div class="verdict-text"><div class="verdict-label ${verdict.key}">${verdict.label}</div><div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?"s":""} · 🚀+2 👍+1 🔴-1 🙅-4</div></div></div><div class="flex-between" style="margin-bottom:18px"><div><div class="results-candidate">${s.name}</div><div class="results-role">${s.role}${s.department?" · <span style='color:var(--accent)'>"+s.department+"</span>":""}</div><div class="results-date">${ds}</div><div style="margin-top:8px">${statusPillHtml(false)}</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:38px;font-weight:500;color:var(--accent);line-height:1">${total}</div><div class="vote-label-sm">total votes</div>${toggleBtn}</div></div><div class="vote-bars">${bars}</div>${aaSection}<hr class="divider"><label style="margin-bottom:10px;display:block">Individual Votes</label><div class="votes-list">${chips}</div><hr class="divider"><label style="margin-bottom:12px;display:block">Interviewer Notes</label>${commentsHtml}</div>`;
+  document.getElementById("results-content").innerHTML=`<div class="card"><div class="verdict-banner ${verdict.key}"><div class="verdict-emoji">${verdict.emoji}</div><div class="verdict-text"><div class="verdict-label ${verdict.key}">${verdict.label}</div><div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?"s":""} · 🚀+2 👍+1 🔴-1 🙅-4</div></div></div><div class="flex-between" style="margin-bottom:18px"><div><div class="results-candidate">${s.name}</div><div class="results-role">${s.role}${s.department?" · <span style='color:var(--accent)'>"+s.department+"</span>":""}</div><div class="results-date">${ds}</div><div style="margin-top:8px">${statusPillHtml(false)}</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:38px;font-weight:500;color:var(--accent);line-height:1">${total}</div><div class="vote-label-sm">total votes</div>${toggleBtn}</div></div><div class="vote-bars">${bars}</div>${render4ASection(vl)}<hr class="divider"><label style="margin-bottom:10px;display:block">Individual Votes</label><div class="votes-list">${chips}</div><hr class="divider"><label style="margin-bottom:12px;display:block">Interviewer Notes</label>${renderComments(vl,emojis)}</div>`;
 };
 
 // DASHBOARD with filters + colored stacked charts
@@ -1039,6 +1007,62 @@ await update(ref(db,“users/”+uid),{firstName,lastName,email,role});
 loadUsersPanel();
 };
 
+// 4A RESULTS rendering helpers
+function render4ASection(vl) {
+var aaDims=[
+{key:“a1”,label:“Achievement”,barCls:“aa-r-b1”,badgeCls:“aa-b1”,badge:“A1”},
+{key:“a2”,label:“Acumen”,     barCls:“aa-r-b2”,badgeCls:“aa-b2”,badge:“A2”},
+{key:“a3”,label:“Ambition”,   barCls:“aa-r-b3”,badgeCls:“aa-b3”,badge:“A3”},
+{key:“a4”,label:“Alignment”,  barCls:“aa-r-b4”,badgeCls:“aa-b4”,badge:“A4”}
+];
+function aaTag(s){
+if(s>=4.5)return{text:“Exceptional”,col:”#1a6b3c”};
+if(s>=3.5)return{text:“Strong”,col:”#4a9e6f”};
+if(s>=2.5)return{text:“Meets bar”,col:”#2c4a8f”};
+if(s>=1.5)return{text:“Below bar”,col:”#c95f2e”};
+return{text:“Concern ⚠”,col:”#8b1a1a”};
+}
+var votesWithStars=vl.filter(function(v){return v.aaStars;});
+var aaHtml=aaDims.map(function(d){
+var scores=votesWithStars.map(function(v){return v.aaStars[d.key]||0;}).filter(function(n){return n>0;});
+if(!scores.length)return’<div class="aa-results-row"><span class="aa-results-badge '+d.badgeCls+'">’+d.badge+’</span><span class="aa-results-name">’+d.label+’</span><div class="aa-results-bar-wrap"></div><span class="aa-results-score" style="color:var(--muted)">—</span><span class="aa-results-tag" style="color:var(--muted)">No data</span></div>’;
+var avg=scores.reduce(function(a,b){return a+b;},0)/scores.length;
+var tag=aaTag(avg);
+return’<div class="aa-results-row"><span class="aa-results-badge '+d.badgeCls+'">’+d.badge+’</span><span class="aa-results-name">’+d.label+’</span><div class="aa-results-bar-wrap"><div class="aa-results-bar '+d.barCls+'" style="width:'+Math.round(avg/5*100)+'%"></div></div><span class="aa-results-score">’+avg.toFixed(1)+’</span><span class="aa-results-tag" style="color:'+tag.col+'">’+tag.text+’</span></div>’;
+}).join(””);
+if(!votesWithStars.length)
+return’<hr class="divider"><label style="margin-bottom:8px;display:block">4A dimension scores</label><p class="text-muted" style="font-size:13px;">No dimension ratings were submitted.</p>’;
+return’<hr class="divider"><label style="margin-bottom:12px;display:block">4A dimension scores <span style="font-weight:400;font-size:11px;color:var(--muted)">(avg across ‘+votesWithStars.length+’ voter’+(votesWithStars.length!==1?‘s’:’’)+’)</span></label>’+aaHtml;
+}
+
+function renderComments(vl, emojis) {
+var commentBgMap={“Strong Yes”:”#e8f5ee”,“Yes”:”#eef6f2”,“No”:”#fdf0e8”,“Strong No”:”#f5e8e8”};
+var commentColMap={“Strong Yes”:“var(–strong-yes)”,“Yes”:“var(–yes)”,“No”:“var(–no)”,“Strong No”:“var(–strong-no)”};
+var withNotes=vl.filter(function(v){return v.notes&&v.notes.trim();});
+if(!withNotes.length) return’<p class="text-muted" style="font-size:13px;">No comments were left by voters.</p>’;
+return withNotes.map(function(v){
+return’<div class="comment-card"><div class="comment-header"><span class="comment-voter">’+v.voter+’</span><span class="comment-vote-pill" style="background:'+commentBgMap[v.vote]+';color:'+commentColMap[v.vote]+'">’+emojis[v.vote]+’ ‘+v.vote+’</span></div><div class="comment-text">’+v.notes.replace(/</g,”<”).replace(/>/g,”>”)+’</div></div>’;
+}).join(””);
+}
+
+window.updateNotesCounter=function(el){
+var counter=document.getElementById(“notes-counter”);
+if(counter)counter.textContent=el.value.length+” / 400”;
+};
+window.toggleAAGuide=function(id,btn){
+var el=document.getElementById(“aa-detail-”+id);
+var chev=btn.querySelector(”.aa-chevron”);
+var isOpen=el.classList.contains(“open”);
+el.classList.toggle(“open”,!isOpen);
+chev.classList.toggle(“open”,!isOpen);
+};
+window.setAAStar=function(id,n){
+for(var i=1;i<=5;i++){
+var s=document.getElementById(“aa-star-”+id+”-”+i);
+if(s)s.textContent=i<=n?“★”:“☆”;
+}
+};
+
 // VOTER VIEW
 let selectedVote=null,currentSurveyId=null;
 async function initVoterView(id){
@@ -1063,12 +1087,12 @@ const ds=s.date?new Date(s.date+“T12:00:00”).toLocaleDateString(“en-US”,
 const uSnap2=await get(ref(db,“users/”+user.uid));
 const uData=uSnap2.val()||{};
 document.title=“Vote: “+s.name;
-const aaData=[
+const aaDataV=[
 {badge:“A1”,cls:“aa-b1”,name:“Achievement”,sub:“Concrete results, ownership”,
 question:“What has this person actually done?”,
 desc:“Concrete, measurable outcomes with clear personal ownership. One well-owned result beats a list of vague contributions.”,
 signals:[
-{type:“s”,label:“Strong”,text:‘Specific results with context (“I led X, delivered Y”)’},
+{type:“s”,label:“Strong”,text:“Specific results with context (I led X, delivered Y)”},
 {type:“w”,label:“Weak”,text:“Team wins with no personal contribution defined”},
 {type:“r”,label:“Red flag”,text:“Credit-claiming without substance; inflated scope”}
 ]},
@@ -1077,15 +1101,15 @@ question:“Does this person have the horsepower?”,
 desc:“Technical depth, domain expertise, and the ability to structure problems and decide with incomplete data. Judgment over credentials.”,
 signals:[
 {type:“s”,label:“Strong”,text:“Sharp structured thinking; self-aware about gaps”},
-{type:“w”,label:“Weak”,text:“Broad but shallow — no depth in any single area”},
-{type:“r”,label:“Red flag”,text:“Can’t go one level deeper when challenged”}
+{type:“w”,label:“Weak”,text:“Broad but shallow - no depth in any single area”},
+{type:“r”,label:“Red flag”,text:“Cannot go one level deeper when challenged”}
 ]},
 {badge:“A3”,cls:“aa-b3”,name:“Ambition”,sub:“Drive to grow, not just earn”,
-question:“Does this person want to grow — not just earn?”,
+question:“Does this person want to grow - not just earn?”,
 desc:“Intrinsic drive to take on more and build a career. Candidates optimizing for compensation or title are a mismatch.”,
 signals:[
 {type:“s”,label:“Strong”,text:“Clear career narrative; sees this role as a stepping stone”},
-{type:“w”,label:“Weak”,text:‘Vague “want to grow” with no direction or track record’},
+{type:“w”,label:“Weak”,text:“Vague want-to-grow with no direction or track record”},
 {type:“r”,label:“Red flag”,text:“Primary motivation is salary; resistant to stretch challenges”}
 ]},
 {badge:“A4”,cls:“aa-b4”,name:“Alignment”,sub:“Fit with lean, fast-paced culture”,
@@ -1097,45 +1121,18 @@ signals:[
 {type:“r”,label:“Red flag”,text:“Needs consensus to act; struggles with direct feedback”}
 ]}
 ];
-const starsHtml=(id)=>Array.from({length:5},(*,i)=>’<span class="aa-star" onclick="setAAStar(\''+id+'\','+(i+1)+')" id="aa-star-'+id+'-'+(i+1)+'">☆</span>’).join(””);
-const sigClsMap={s:“aa-sig-s”,w:“aa-sig-w”,r:“aa-sig-r”};
-const aaCards=aaData.map((d)=>{
-const id=d.badge.toLowerCase();
-const sigRows=d.signals.map(sg=>’<div class="aa-signal"><span class="aa-sig-badge '+sigClsMap[sg.type]+'">’+sg.label+’</span><span class="aa-sig-text">’+sg.text+’</span></div>’).join(””);
-return’<div class="aa-card">’
-+’<div class="aa-main">’
-+’<span class="aa-badge '+d.cls+'">’+d.badge+’</span>’
-+’<span class="aa-name">’+d.name+’</span>’
-+’<span class="aa-sub">’+d.sub+’</span>’
-+’<div class="aa-stars">’+starsHtml(id)+’</div>’
-+’<button class="aa-guide-btn" onclick="toggleAAGuide(\''+id+'\',this)">Guide <span class="aa-chevron">▾</span></button>’
-+’</div>’
-+’<div class="aa-detail" id="aa-detail-'+id+'">’
-+’<p style="font-size:13px;font-style:italic;color:var(--muted);margin-bottom:8px;">’+d.question+’</p>’
-+’<p style="font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.55;">’+d.desc+’</p>’
-+sigRows
-+’</div></div>’;
+const sigMap={s:“aa-sig-s”,w:“aa-sig-w”,r:“aa-sig-r”};
+const buildCards=aaDataV.map(function(d){
+const did=d.badge.toLowerCase();
+let stars=””;
+for(let i=1;i<=5;i++){stars+=’<span class="aa-star" id="aa-star-'+did+'-'+i+'" onclick="setAAStar(\''+did+'\','+i+')">\u2606</span>’;}
+let sigs=””;
+d.signals.forEach(function(sg){sigs+=’<div class="aa-signal"><span class="aa-sig-badge '+sigMap[sg.type]+'">’+sg.label+’</span><span class="aa-sig-text">’+sg.text+’</span></div>’;});
+return ‘<div class="aa-card"><div class="aa-main"><span class="aa-badge '+d.cls+'">’+d.badge+’</span><span class="aa-name">’+d.name+’</span><span class="aa-sub">’+d.sub+’</span><div class="aa-stars">’+stars+’</div><button class="aa-guide-btn" onclick="toggleAAGuide(\''+did+'\',this)">Guide <span class="aa-chevron">\u25be</span></button></div><div class="aa-detail" id="aa-detail-'+did+'"><p style="font-size:13px;font-style:italic;color:var(--muted);margin-bottom:8px;">’+d.question+’</p><p style="font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.55;">’+d.desc+’</p>’+sigs+’</div></div>’;
 }).join(””);
-document.getElementById(“voter-card”).innerHTML=` <p class="voter-eyebrow">Interview Panel Vote</p> <p class="voter-candidate">${s.name}</p> <p class="voter-role-text">${s.role}${s.department?" · "+s.department:""}</p> <p class="voter-date">${ds}</p> <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${displayName({...uData,email:user.email})}</strong></p> <div class="aa-section"> <div class="aa-section-label">4A dimensions</div> ${aaCards} </div> <div class="vote-buttons"> <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')"><span class="vote-emoji">🚀</span>Strong Yes<span class="vote-weight">+2 pts</span></button> <button class="vote-btn v-Y"  onclick="selectVote('Yes')"><span class="vote-emoji">👍</span>Yes<span class="vote-weight">+1 pt</span></button> <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">🔴</span>No<span class="vote-weight">-1 pt</span></button> <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">🙅</span>Strong No<span class="vote-weight">-4 pts</span></button> </div> <div style="margin-bottom:18px;text-align:left;"> <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional · visible to committee after voting closes)</span></label> <textarea id="vote-notes" maxlength="400" placeholder="Quick summary for the hiring committee…" oninput="updateNotesCounter(this)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;min-height:72px;outline:none;"></textarea> <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;" id="notes-counter">0 / 400</div> </div> <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" id="submit-vote-btn" onclick="submitVote()">Submit Vote</button> <div id="vote-msg"></div>`;
+document.getElementById(“voter-card”).innerHTML=` <p class="voter-eyebrow">Interview Panel Vote</p> <p class="voter-candidate">${s.name}</p> <p class="voter-role-text">${s.role}${s.department?" · "+s.department:""}</p> <p class="voter-date">${ds}</p> <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${displayName({...uData,email:user.email})}</strong></p> <div class="aa-section"><div class="aa-section-label">4A dimensions</div>${buildCards}</div> <div class="vote-buttons"> <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')"><span class="vote-emoji">\U0001F680</span>Strong Yes<span class="vote-weight">+2 pts</span></button> <button class="vote-btn v-Y"  onclick="selectVote('Yes')"><span class="vote-emoji">\U0001F44D</span>Yes<span class="vote-weight">+1 pt</span></button> <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">\U0001F534</span>No<span class="vote-weight">-1 pt</span></button> <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">\U0001F645</span>Strong No<span class="vote-weight">-4 pts</span></button> </div> <div style="margin-bottom:18px;text-align:left;"> <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional - visible to committee after voting closes)</span></label> <textarea id="vote-notes" maxlength="400" placeholder="Quick summary for the hiring committee..." oninput="updateNotesCounter(this)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;min-height:72px;outline:none;"></textarea> <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;" id="notes-counter">0 / 400</div> </div> <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" id="submit-vote-btn" onclick="submitVote()">Submit Vote</button> <div id="vote-msg"></div>`;
 });
 }
-window.updateNotesCounter=function(el){
-const counter=document.getElementById(“notes-counter”);
-if(counter)counter.textContent=el.value.length+” / 400”;
-};
-window.toggleAAGuide=function(id,btn){
-const el=document.getElementById(“aa-detail-”+id);
-const chev=btn.querySelector(”.aa-chevron”);
-const open=el.classList.contains(“open”);
-el.classList.toggle(“open”,!open);
-chev.classList.toggle(“open”,!open);
-};
-window.setAAStar=function(id,n){
-for(let i=1;i<=5;i++){
-const s=document.getElementById(“aa-star-”+id+”-”+i);
-if(s)s.textContent=i<=n?“★”:“☆”;
-}
-};
 window.selectVote=function(value){
 selectedVote=value;
 const map={“Strong Yes”:“v-SY”,“Yes”:“v-Y”,“No”:“v-N”,“Strong No”:“v-SN”};
@@ -1159,10 +1156,10 @@ const uData=uSnap.val()||{};
 const voterDisplayName=displayName({…uData,email:user.email});
 const notes=(document.getElementById(“vote-notes”)?.value||””).trim().slice(0,400);
 const aaStars={
-a1:parseInt(Array.from({length:5},(*,i)=>document.getElementById(“aa-star-a1-”+(5-i))?.textContent===“★”?5-i:0).find(n=>n>0)||0),
-a2:parseInt(Array.from({length:5},(*,i)=>document.getElementById(“aa-star-a2-”+(5-i))?.textContent===“★”?5-i:0).find(n=>n>0)||0),
-a3:parseInt(Array.from({length:5},(*,i)=>document.getElementById(“aa-star-a3-”+(5-i))?.textContent===“★”?5-i:0).find(n=>n>0)||0),
-a4:parseInt(Array.from({length:5},(_,i)=>document.getElementById(“aa-star-a4-”+(5-i))?.textContent===“★”?5-i:0).find(n=>n>0)||0)
+a1:(()=>{for(let i=5;i>=1;i–){const e=document.getElementById(“aa-star-a1-”+i);if(e&&e.textContent===“★”)return i;}return 0;})(),
+a2:(()=>{for(let i=5;i>=1;i–){const e=document.getElementById(“aa-star-a2-”+i);if(e&&e.textContent===“★”)return i;}return 0;})(),
+a3:(()=>{for(let i=5;i>=1;i–){const e=document.getElementById(“aa-star-a3-”+i);if(e&&e.textContent===“★”)return i;}return 0;})(),
+a4:(()=>{for(let i=5;i>=1;i–){const e=document.getElementById(“aa-star-a4-”+i);if(e&&e.textContent===“★”)return i;}return 0;})()
 };
 await set(vRef,{voter:voterDisplayName,voterEmail:user.email,voterUid:user.uid,vote:selectedVote,notes:notes||””,aaStars,ts:Date.now()});
 const s2=(await get(ref(db,“surveys/”+currentSurveyId))).val();
