@@ -184,7 +184,30 @@ input.error,select.error{border-color:var(--strong-no);}
 .loading{text-align:center;padding:36px;color:var(--muted);font-size:14px;}
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg);}}
-@media(max-width:700px){
+.aa-section{margin-bottom:20px;}
+.aa-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.aa-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden;}
+.aa-main{display:flex;align-items:center;gap:10px;padding:12px 16px;}
+.aa-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;flex-shrink:0;}
+.aa-b1{background:#EAF3DE;color:#27500A;}.aa-b2{background:#E6F1FB;color:#0C447C;}
+.aa-b3{background:#FAEEDA;color:#633806;}.aa-b4{background:#EEEDFE;color:#3C3489;}
+.aa-name{font-size:13px;font-weight:600;color:var(--ink);width:96px;flex-shrink:0;}
+.aa-sub{font-size:12px;color:var(--muted);flex:1;}
+.aa-stars{display:flex;gap:3px;flex-shrink:0;}
+.aa-star{width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .1s;}
+.aa-star:hover{transform:scale(1.25);}
+.aa-guide-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted);padding:0 0 0 6px;display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0;}
+.aa-guide-btn:hover{color:var(--ink);}
+.aa-chevron{display:inline-block;transition:transform .2s;font-size:10px;}
+.aa-chevron.open{transform:rotate(180deg);}
+.aa-detail{border-top:1px solid var(--border);padding:12px 16px;background:#fafaf8;display:none;}
+.aa-detail.open{display:block;}
+.aa-signal{display:flex;gap:7px;margin-bottom:6px;align-items:flex-start;}
+.aa-signal:last-child{margin-bottom:0;}
+.aa-sig-badge{font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;flex-shrink:0;margin-top:1px;}
+.aa-sig-s{background:#d1fae5;color:#065f46;}.aa-sig-w{background:#fef3c7;color:#92400e;}.aa-sig-r{background:#fee2e2;color:#991b1b;}
+.aa-sig-text{font-size:12px;color:var(--muted);line-height:1.5;}
+
   header{padding:8px 16px;height:auto;flex-wrap:wrap;gap:6px;}
   .nav-tab{padding:5px 10px;font-size:12px;}
   .view{padding:20px 16px;}
@@ -620,7 +643,7 @@ window.renderResultsContent=async function(id){
   const ds=s.date?new Date(s.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}):"—";
   const tLabel=isOpen?"🔒 Close Voting":"🔓 Open Voting";
   const tClass=isOpen?"btn-close-toggle":"btn-open-toggle";
-  const emojis={"Strong Yes":"🚀","Yes":"👍","No":"👎","Strong No":"🚫"};
+  const emojis={"Strong Yes":"🚀","Yes":"👍","No":"🔴","Strong No":"🙅"};
   const chipCls={"Strong Yes":"SY","Yes":"Y","No":"N","Strong No":"SN"};
   const toggleBtn=!isVoter?`<button class="btn ${tClass} btn-sm" style="margin-top:10px" onclick="toggleSurveyStatus('${id}',${isOpen})">${tLabel}</button>`:"";
   if(isOpen){
@@ -637,7 +660,7 @@ window.renderResultsContent=async function(id){
   const wt={"Strong Yes":"+2","Yes":"+1","No":"-1","Strong No":"-4"};
   const bars=Object.entries(counts).map(([label,count])=>`<div class="vote-row"><div class="vote-row-label" style="color:var(--${cls[label]})">${emojis[label]} ${label}</div><div class="bar-track"><div class="bar-fill ${cls[label]}" style="width:${pct(count)}%">${count>0?count:""}</div></div><div class="bar-num">${count}</div><div class="bar-weight">${wt[label]}</div></div>`).join("");
   const chips=vl.length?vl.map(v=>`<span class="vote-chip chip-${chipCls[v.vote]}">${emojis[v.vote]} <b>${v.voter}</b> · ${v.vote}</span>`).join(""):`<span class="text-muted">No votes yet.</span>`;
-  document.getElementById("results-content").innerHTML=`<div class="card"><div class="verdict-banner ${verdict.key}"><div class="verdict-emoji">${verdict.emoji}</div><div class="verdict-text"><div class="verdict-label ${verdict.key}">${verdict.label}</div><div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?"s":""} · 🚀+2 👍+1 👎-1 🚫-4</div></div></div><div class="flex-between" style="margin-bottom:18px"><div><div class="results-candidate">${s.name}</div><div class="results-role">${s.role}${s.department?" · <span style='color:var(--accent)'>"+s.department+"</span>":""}</div><div class="results-date">${ds}</div><div style="margin-top:8px">${statusPillHtml(false)}</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:38px;font-weight:500;color:var(--accent);line-height:1">${total}</div><div class="vote-label-sm">total votes</div>${toggleBtn}</div></div><div class="vote-bars">${bars}</div><hr class="divider"><label style="margin-bottom:10px;display:block">Individual Votes</label><div class="votes-list">${chips}</div><hr class="divider"><label style="margin-bottom:8px;display:block">Voting Link</label><div class="link-box"><code id="result-link">${buildLink(id)}</code><button class="btn btn-outline btn-sm" onclick="copyText('result-link')">Copy</button></div></div>`;
+  document.getElementById("results-content").innerHTML=`<div class="card"><div class="verdict-banner ${verdict.key}"><div class="verdict-emoji">${verdict.emoji}</div><div class="verdict-text"><div class="verdict-label ${verdict.key}">${verdict.label}</div><div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?"s":""} · 🚀+2 👍+1 🔴-1 🙅-4</div></div></div><div class="flex-between" style="margin-bottom:18px"><div><div class="results-candidate">${s.name}</div><div class="results-role">${s.role}${s.department?" · <span style='color:var(--accent)'>"+s.department+"</span>":""}</div><div class="results-date">${ds}</div><div style="margin-top:8px">${statusPillHtml(false)}</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:38px;font-weight:500;color:var(--accent);line-height:1">${total}</div><div class="vote-label-sm">total votes</div>${toggleBtn}</div></div><div class="vote-bars">${bars}</div><hr class="divider"><label style="margin-bottom:10px;display:block">Individual Votes</label><div class="votes-list">${chips}</div><hr class="divider"><label style="margin-bottom:8px;display:block">Voting Link</label><div class="link-box"><code id="result-link">${buildLink(id)}</code><button class="btn btn-outline btn-sm" onclick="copyText('result-link')">Copy</button></div></div>`;
 };
 
 // DASHBOARD with filters + colored stacked charts
@@ -1006,22 +1029,81 @@ async function initVoterView(id){
     const uSnap2=await get(ref(db,"users/"+user.uid));
     const uData=uSnap2.val()||{};
     document.title="Vote: "+s.name;
+    const aaData=[
+      {badge:"A1",cls:"aa-b1",name:"Achievement",sub:"Concrete results, ownership",
+       signals:[
+         {type:"s",label:"Strong",text:'Specific results with context ("I led X, delivered Y")'},
+         {type:"w",label:"Weak",text:"Team wins with no personal contribution defined"},
+         {type:"r",label:"Red flag",text:"Credit-claiming without substance; inflated scope"}
+       ]},
+      {badge:"A2",cls:"aa-b2",name:"Acumen",sub:"Technical depth, judgment",
+       signals:[
+         {type:"s",label:"Strong",text:"Sharp structured thinking; self-aware about gaps"},
+         {type:"w",label:"Weak",text:"Broad but shallow — no depth in any single area"},
+         {type:"r",label:"Red flag",text:"Can't go one level deeper when challenged"}
+       ]},
+      {badge:"A3",cls:"aa-b3",name:"Ambition",sub:"Drive to grow, not just earn",
+       signals:[
+         {type:"s",label:"Strong",text:"Clear career narrative; sees this role as a stepping stone"},
+         {type:"w",label:"Weak",text:'Vague "want to grow" with no direction or track record'},
+         {type:"r",label:"Red flag",text:"Primary motivation is salary; resistant to stretch challenges"}
+       ]},
+      {badge:"A4",cls:"aa-b4",name:"Alignment",sub:"Fit with lean, fast-paced culture",
+       signals:[
+         {type:"s",label:"Strong",text:"Moved fast in prior roles; data-driven; thrives without structure"},
+         {type:"w",label:"Weak",text:"Only large-company, heavy-process experience"},
+         {type:"r",label:"Red flag",text:"Needs consensus to act; struggles with direct feedback"}
+       ]}
+    ];
+    const starsHtml=(id)=>Array.from({length:5},(_,i)=>`<span class="aa-star" onclick="setAAStar('${id}',${i+1})" id="aa-star-${id}-${i+1}">☆</span>`).join("");
+    const sigClsMap={s:"aa-sig-s",w:"aa-sig-w",r:"aa-sig-r"};
+    const aaCards=aaData.map((d,idx)=>{
+      const id=d.badge.toLowerCase();
+      const sigRows=d.signals.map(sg=>`<div class="aa-signal"><span class="aa-sig-badge ${sigClsMap[sg.type]}">${sg.label}</span><span class="aa-sig-text">${sg.text}</span></div>`).join("");
+      return`<div class="aa-card">
+        <div class="aa-main">
+          <span class="aa-badge ${d.cls}">${d.badge}</span>
+          <span class="aa-name">${d.name}</span>
+          <span class="aa-sub">${d.sub}</span>
+          <div class="aa-stars">${starsHtml(id)}</div>
+          <button class="aa-guide-btn" onclick="toggleAAGuide('${id}',this)">Guide <span class="aa-chevron">▾</span></button>
+        </div>
+        <div class="aa-detail" id="aa-detail-${id}">${sigRows}</div>
+      </div>`;
+    }).join("");
     document.getElementById("voter-card").innerHTML=`
       <p class="voter-eyebrow">Interview Panel Vote</p>
       <p class="voter-candidate">${s.name}</p>
       <p class="voter-role-text">${s.role}${s.department?" · "+s.department:""}</p>
       <p class="voter-date">${ds}</p>
       <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${displayName({...uData,email:user.email})}</strong></p>
+      <div class="aa-section">
+        <div class="aa-section-label">4A dimensions</div>
+        ${aaCards}
+      </div>
       <div class="vote-buttons">
         <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')"><span class="vote-emoji">🚀</span>Strong Yes<span class="vote-weight">+2 pts</span></button>
         <button class="vote-btn v-Y"  onclick="selectVote('Yes')"><span class="vote-emoji">👍</span>Yes<span class="vote-weight">+1 pt</span></button>
-        <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">👎</span>No<span class="vote-weight">-1 pt</span></button>
-        <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">🚫</span>Strong No<span class="vote-weight">-4 pts</span></button>
+        <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">🔴</span>No<span class="vote-weight">-1 pt</span></button>
+        <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">🙅</span>Strong No<span class="vote-weight">-4 pts</span></button>
       </div>
       <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" id="submit-vote-btn" onclick="submitVote()">Submit Vote</button>
       <div id="vote-msg"></div>`;
   });
 }
+window.toggleAAGuide=function(id,btn){
+  const el=document.getElementById("aa-detail-"+id);
+  const chev=btn.querySelector(".aa-chevron");
+  const open=el.classList.contains("open");
+  el.classList.toggle("open",!open);
+  chev.classList.toggle("open",!open);
+};
+window.setAAStar=function(id,n){
+  for(let i=1;i<=5;i++){
+    const s=document.getElementById("aa-star-"+id+"-"+i);
+    if(s)s.textContent=i<=n?"★":"☆";
+  }
+};
 window.selectVote=function(value){
   selectedVote=value;
   const map={"Strong Yes":"v-SY","Yes":"v-Y","No":"v-N","Strong No":"v-SN"};
@@ -1048,7 +1130,7 @@ window.submitVote=async function(){
   const uSnap3=await get(ref(db,"users/"+user.uid));
   const uData2=uSnap3.val()||{};
   const colors={"Strong Yes":"#1a6b3c","Yes":"#4a9e6f","No":"#c95f2e","Strong No":"#8b1a1a"};
-  const emojis={"Strong Yes":"🚀","Yes":"👍","No":"👎","Strong No":"🚫"};
+  const emojis={"Strong Yes":"🚀","Yes":"👍","No":"🔴","Strong No":"🙅"};
   document.getElementById("voter-card").innerHTML=`<div style="padding:16px 0"><div style="font-size:52px;margin-bottom:14px">✓</div><p class="voter-eyebrow">Vote submitted</p><p class="voter-candidate">${s2.name}</p><p class="voter-role-text">${s2.role}</p><div style="margin:20px 0;padding:14px;background:var(--cream);border-radius:10px"><p style="font-size:13px;color:var(--muted);margin-bottom:4px">${displayName({...uData2,email:user.email})}</p><p style="font-family:'DM Serif Display',serif;font-size:26px;color:${colors[selectedVote]}">${emojis[selectedVote]} ${selectedVote}</p></div><p style="font-size:13px;color:var(--muted)">Thank you. Your vote has been recorded.</p></div>`;
 };
 
