@@ -184,7 +184,12 @@ input.error,select.error{border-color:var(--strong-no);}
 .loading{text-align:center;padding:36px;color:var(--muted);font-size:14px;}
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.aa-section{margin-bottom:20px;}
+.comment-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);}
+.comment-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.comment-voter{font-size:13px;font-weight:600;color:var(--ink);}
+.comment-vote-pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;}
+.comment-text{font-size:13px;color:var(--muted);line-height:1.6;}
+
 .aa-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
 .aa-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden;}
 .aa-main{display:flex;align-items:center;gap:10px;padding:12px 16px;}
@@ -660,7 +665,18 @@ window.renderResultsContent=async function(id){
   const wt={"Strong Yes":"+2","Yes":"+1","No":"-1","Strong No":"-4"};
   const bars=Object.entries(counts).map(([label,count])=>`<div class="vote-row"><div class="vote-row-label" style="color:var(--${cls[label]})">${emojis[label]} ${label}</div><div class="bar-track"><div class="bar-fill ${cls[label]}" style="width:${pct(count)}%">${count>0?count:""}</div></div><div class="bar-num">${count}</div><div class="bar-weight">${wt[label]}</div></div>`).join("");
   const chips=vl.length?vl.map(v=>`<span class="vote-chip chip-${chipCls[v.vote]}">${emojis[v.vote]} <b>${v.voter}</b> · ${v.vote}</span>`).join(""):`<span class="text-muted">No votes yet.</span>`;
-  document.getElementById("results-content").innerHTML=`<div class="card"><div class="verdict-banner ${verdict.key}"><div class="verdict-emoji">${verdict.emoji}</div><div class="verdict-text"><div class="verdict-label ${verdict.key}">${verdict.label}</div><div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?"s":""} · 🚀+2 👍+1 🔴-1 🙅-4</div></div></div><div class="flex-between" style="margin-bottom:18px"><div><div class="results-candidate">${s.name}</div><div class="results-role">${s.role}${s.department?" · <span style='color:var(--accent)'>"+s.department+"</span>":""}</div><div class="results-date">${ds}</div><div style="margin-top:8px">${statusPillHtml(false)}</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:38px;font-weight:500;color:var(--accent);line-height:1">${total}</div><div class="vote-label-sm">total votes</div>${toggleBtn}</div></div><div class="vote-bars">${bars}</div><hr class="divider"><label style="margin-bottom:10px;display:block">Individual Votes</label><div class="votes-list">${chips}</div><hr class="divider"><label style="margin-bottom:8px;display:block">Voting Link</label><div class="link-box"><code id="result-link">${buildLink(id)}</code><button class="btn btn-outline btn-sm" onclick="copyText('result-link')">Copy</button></div></div>`;
+  const commentBgMap={"Strong Yes":"#e8f5ee","Yes":"#eef6f2","No":"#fdf0e8","Strong No":"#f5e8e8"};
+  const commentColMap={"Strong Yes":"var(--strong-yes)","Yes":"var(--yes)","No":"var(--no)","Strong No":"var(--strong-no)"};
+  const withNotes=vl.filter(v=>v.notes&&v.notes.trim());
+  const commentsHtml=withNotes.length?withNotes.map(v=>`
+    <div class="comment-card">
+      <div class="comment-header">
+        <span class="comment-voter">${v.voter}</span>
+        <span class="comment-vote-pill" style="background:${commentBgMap[v.vote]};color:${commentColMap[v.vote]}">${emojis[v.vote]} ${v.vote}</span>
+      </div>
+      <div class="comment-text">${v.notes.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+    </div>`).join(""):`<p class="text-muted" style="font-size:13px;">No comments were left by voters.</p>`;
+  document.getElementById("results-content").innerHTML=`<div class="card"><div class="verdict-banner ${verdict.key}"><div class="verdict-emoji">${verdict.emoji}</div><div class="verdict-text"><div class="verdict-label ${verdict.key}">${verdict.label}</div><div class="verdict-score">${verdict.scoreText} · ${total} vote${total!==1?"s":""} · 🚀+2 👍+1 🔴-1 🙅-4</div></div></div><div class="flex-between" style="margin-bottom:18px"><div><div class="results-candidate">${s.name}</div><div class="results-role">${s.role}${s.department?" · <span style='color:var(--accent)'>"+s.department+"</span>":""}</div><div class="results-date">${ds}</div><div style="margin-top:8px">${statusPillHtml(false)}</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:38px;font-weight:500;color:var(--accent);line-height:1">${total}</div><div class="vote-label-sm">total votes</div>${toggleBtn}</div></div><div class="vote-bars">${bars}</div><hr class="divider"><label style="margin-bottom:10px;display:block">Individual Votes</label><div class="votes-list">${chips}</div><hr class="divider"><label style="margin-bottom:12px;display:block">Interviewer Notes</label>${commentsHtml}</div>`;
 };
 
 // DASHBOARD with filters + colored stacked charts
@@ -1031,24 +1047,32 @@ async function initVoterView(id){
     document.title="Vote: "+s.name;
     const aaData=[
       {badge:"A1",cls:"aa-b1",name:"Achievement",sub:"Concrete results, ownership",
+       question:"What has this person actually done?",
+       desc:"Concrete, measurable outcomes with clear personal ownership. One well-owned result beats a list of vague contributions.",
        signals:[
          {type:"s",label:"Strong",text:'Specific results with context ("I led X, delivered Y")'},
          {type:"w",label:"Weak",text:"Team wins with no personal contribution defined"},
          {type:"r",label:"Red flag",text:"Credit-claiming without substance; inflated scope"}
        ]},
       {badge:"A2",cls:"aa-b2",name:"Acumen",sub:"Technical depth, judgment",
+       question:"Does this person have the horsepower?",
+       desc:"Technical depth, domain expertise, and the ability to structure problems and decide with incomplete data. Judgment over credentials.",
        signals:[
          {type:"s",label:"Strong",text:"Sharp structured thinking; self-aware about gaps"},
          {type:"w",label:"Weak",text:"Broad but shallow — no depth in any single area"},
          {type:"r",label:"Red flag",text:"Can't go one level deeper when challenged"}
        ]},
       {badge:"A3",cls:"aa-b3",name:"Ambition",sub:"Drive to grow, not just earn",
+       question:"Does this person want to grow — not just earn?",
+       desc:"Intrinsic drive to take on more and build a career. Candidates optimizing for compensation or title are a mismatch.",
        signals:[
          {type:"s",label:"Strong",text:"Clear career narrative; sees this role as a stepping stone"},
          {type:"w",label:"Weak",text:'Vague "want to grow" with no direction or track record'},
          {type:"r",label:"Red flag",text:"Primary motivation is salary; resistant to stretch challenges"}
        ]},
       {badge:"A4",cls:"aa-b4",name:"Alignment",sub:"Fit with lean, fast-paced culture",
+       question:"Will this person thrive here?",
+       desc:"Fit with a lean, fast-paced, data-driven, high-ownership culture. Misalignment here is the leading predictor of early attrition.",
        signals:[
          {type:"s",label:"Strong",text:"Moved fast in prior roles; data-driven; thrives without structure"},
          {type:"w",label:"Weak",text:"Only large-company, heavy-process experience"},
@@ -1057,7 +1081,7 @@ async function initVoterView(id){
     ];
     const starsHtml=(id)=>Array.from({length:5},(_,i)=>`<span class="aa-star" onclick="setAAStar('${id}',${i+1})" id="aa-star-${id}-${i+1}">☆</span>`).join("");
     const sigClsMap={s:"aa-sig-s",w:"aa-sig-w",r:"aa-sig-r"};
-    const aaCards=aaData.map((d,idx)=>{
+    const aaCards=aaData.map((d)=>{
       const id=d.badge.toLowerCase();
       const sigRows=d.signals.map(sg=>`<div class="aa-signal"><span class="aa-sig-badge ${sigClsMap[sg.type]}">${sg.label}</span><span class="aa-sig-text">${sg.text}</span></div>`).join("");
       return`<div class="aa-card">
@@ -1068,7 +1092,11 @@ async function initVoterView(id){
           <div class="aa-stars">${starsHtml(id)}</div>
           <button class="aa-guide-btn" onclick="toggleAAGuide('${id}',this)">Guide <span class="aa-chevron">▾</span></button>
         </div>
-        <div class="aa-detail" id="aa-detail-${id}">${sigRows}</div>
+        <div class="aa-detail" id="aa-detail-${id}">
+          <p style="font-size:13px;font-style:italic;color:var(--muted);margin-bottom:8px;">${d.question}</p>
+          <p style="font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.55;">${d.desc}</p>
+          ${sigRows}
+        </div>
       </div>`;
     }).join("");
     document.getElementById("voter-card").innerHTML=`
@@ -1087,8 +1115,18 @@ async function initVoterView(id){
         <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">🔴</span>No<span class="vote-weight">-1 pt</span></button>
         <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">🙅</span>Strong No<span class="vote-weight">-4 pts</span></button>
       </div>
+      <div style="margin-bottom:18px;text-align:left;">
+        <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional · visible to committee after voting closes)</span></label>
+        <textarea id="vote-notes" maxlength="400" placeholder="Quick summary for the hiring committee…" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;min-height:72px;outline:none;"></textarea>
+        <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;" id="notes-counter">0 / 400</div>
+      </div>
       <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" id="submit-vote-btn" onclick="submitVote()">Submit Vote</button>
-      <div id="vote-msg"></div>`;
+      <div id="vote-msg"></div>
+      <script>
+        document.getElementById("vote-notes").addEventListener("input",function(){
+          document.getElementById("notes-counter").textContent=this.value.length+" / 400";
+        });
+      <\/script>`;
   });
 }
 window.toggleAAGuide=function(id,btn){
@@ -1125,7 +1163,8 @@ window.submitVote=async function(){
   const uSnap=await get(ref(db,"users/"+user.uid));
   const uData=uSnap.val()||{};
   const voterDisplayName=displayName({...uData,email:user.email});
-  await set(vRef,{voter:voterDisplayName,voterEmail:user.email,voterUid:user.uid,vote:selectedVote,ts:Date.now()});
+  const notes=(document.getElementById("vote-notes")?.value||"").trim().slice(0,400);
+  await set(vRef,{voter:voterDisplayName,voterEmail:user.email,voterUid:user.uid,vote:selectedVote,notes:notes||"",ts:Date.now()});
   const s2=(await get(ref(db,"surveys/"+currentSurveyId))).val();
   const uSnap3=await get(ref(db,"users/"+user.uid));
   const uData2=uSnap3.val()||{};
