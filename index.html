@@ -1097,16 +1097,32 @@ signals:[
 {type:“r”,label:“Red flag”,text:“Needs consensus to act; struggles with direct feedback”}
 ]}
 ];
-const starsHtml=(id)=>Array.from({length:5},(*,i)=>`<span class="aa-star" onclick="setAAStar('${id}',${i+1})" id="aa-star-${id}-${i+1}">☆</span>`).join(””);
+const starsHtml=(id)=>Array.from({length:5},(*,i)=>’<span class="aa-star" onclick="setAAStar(\''+id+'\','+(i+1)+')" id="aa-star-'+id+'-'+(i+1)+'">☆</span>’).join(””);
 const sigClsMap={s:“aa-sig-s”,w:“aa-sig-w”,r:“aa-sig-r”};
 const aaCards=aaData.map((d)=>{
 const id=d.badge.toLowerCase();
-const sigRows=d.signals.map(sg=>`<div class="aa-signal"><span class="aa-sig-badge ${sigClsMap[sg.type]}">${sg.label}</span><span class="aa-sig-text">${sg.text}</span></div>`).join(””);
-return`<div class="aa-card"> <div class="aa-main"> <span class="aa-badge ${d.cls}">${d.badge}</span> <span class="aa-name">${d.name}</span> <span class="aa-sub">${d.sub}</span> <div class="aa-stars">${starsHtml(id)}</div> <button class="aa-guide-btn" onclick="toggleAAGuide('${id}',this)">Guide <span class="aa-chevron">▾</span></button> </div> <div class="aa-detail" id="aa-detail-${id}"> <p style="font-size:13px;font-style:italic;color:var(--muted);margin-bottom:8px;">${d.question}</p> <p style="font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.55;">${d.desc}</p> ${sigRows} </div> </div>`;
+const sigRows=d.signals.map(sg=>’<div class="aa-signal"><span class="aa-sig-badge '+sigClsMap[sg.type]+'">’+sg.label+’</span><span class="aa-sig-text">’+sg.text+’</span></div>’).join(””);
+return’<div class="aa-card">’
++’<div class="aa-main">’
++’<span class="aa-badge '+d.cls+'">’+d.badge+’</span>’
++’<span class="aa-name">’+d.name+’</span>’
++’<span class="aa-sub">’+d.sub+’</span>’
++’<div class="aa-stars">’+starsHtml(id)+’</div>’
++’<button class="aa-guide-btn" onclick="toggleAAGuide(\''+id+'\',this)">Guide <span class="aa-chevron">▾</span></button>’
++’</div>’
++’<div class="aa-detail" id="aa-detail-'+id+'">’
++’<p style="font-size:13px;font-style:italic;color:var(--muted);margin-bottom:8px;">’+d.question+’</p>’
++’<p style="font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.55;">’+d.desc+’</p>’
++sigRows
++’</div></div>’;
 }).join(””);
-document.getElementById(“voter-card”).innerHTML=` <p class="voter-eyebrow">Interview Panel Vote</p> <p class="voter-candidate">${s.name}</p> <p class="voter-role-text">${s.role}${s.department?" · "+s.department:""}</p> <p class="voter-date">${ds}</p> <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${displayName({...uData,email:user.email})}</strong></p> <div class="aa-section"> <div class="aa-section-label">4A dimensions</div> ${aaCards} </div> <div class="vote-buttons"> <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')"><span class="vote-emoji">🚀</span>Strong Yes<span class="vote-weight">+2 pts</span></button> <button class="vote-btn v-Y"  onclick="selectVote('Yes')"><span class="vote-emoji">👍</span>Yes<span class="vote-weight">+1 pt</span></button> <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">🔴</span>No<span class="vote-weight">-1 pt</span></button> <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">🙅</span>Strong No<span class="vote-weight">-4 pts</span></button> </div> <div style="margin-bottom:18px;text-align:left;"> <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional · visible to committee after voting closes)</span></label> <textarea id="vote-notes" maxlength="400" placeholder="Quick summary for the hiring committee…" oninput="document.getElementById('notes-counter').textContent=this.value.length+' / 400'" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;min-height:72px;outline:none;"></textarea> <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;" id="notes-counter">0 / 400</div> </div> <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" id="submit-vote-btn" onclick="submitVote()">Submit Vote</button> <div id="vote-msg"></div>`;
+document.getElementById(“voter-card”).innerHTML=` <p class="voter-eyebrow">Interview Panel Vote</p> <p class="voter-candidate">${s.name}</p> <p class="voter-role-text">${s.role}${s.department?" · "+s.department:""}</p> <p class="voter-date">${ds}</p> <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Voting as: <strong>${displayName({...uData,email:user.email})}</strong></p> <div class="aa-section"> <div class="aa-section-label">4A dimensions</div> ${aaCards} </div> <div class="vote-buttons"> <button class="vote-btn v-SY" onclick="selectVote('Strong Yes')"><span class="vote-emoji">🚀</span>Strong Yes<span class="vote-weight">+2 pts</span></button> <button class="vote-btn v-Y"  onclick="selectVote('Yes')"><span class="vote-emoji">👍</span>Yes<span class="vote-weight">+1 pt</span></button> <button class="vote-btn v-N"  onclick="selectVote('No')"><span class="vote-emoji">🔴</span>No<span class="vote-weight">-1 pt</span></button> <button class="vote-btn v-SN" onclick="selectVote('Strong No')"><span class="vote-emoji">🙅</span>Strong No<span class="vote-weight">-4 pts</span></button> </div> <div style="margin-bottom:18px;text-align:left;"> <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional · visible to committee after voting closes)</span></label> <textarea id="vote-notes" maxlength="400" placeholder="Quick summary for the hiring committee…" oninput="updateNotesCounter(this)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;min-height:72px;outline:none;"></textarea> <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;" id="notes-counter">0 / 400</div> </div> <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" id="submit-vote-btn" onclick="submitVote()">Submit Vote</button> <div id="vote-msg"></div>`;
 });
 }
+window.updateNotesCounter=function(el){
+const counter=document.getElementById(“notes-counter”);
+if(counter)counter.textContent=el.value.length+” / 400”;
+};
 window.toggleAAGuide=function(id,btn){
 const el=document.getElementById(“aa-detail-”+id);
 const chev=btn.querySelector(”.aa-chevron”);
