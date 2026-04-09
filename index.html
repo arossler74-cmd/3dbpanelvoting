@@ -1744,10 +1744,8 @@ function renderInterview(c) {
       <span class="aa-tagline">${q.tagline}</span><span class="aa-chev ${open?"open":""}">▾</span>
     </div><div class="aa-body ${open?"open":""}"><div class="aa-desc">${q.desc}</div>${qHtml}</div></div>`;
   });
-  return html;
-}
-
-function renderDebrief(c) {
+  return `<div>${assignBtn}</div>${html}`;
+}function renderDebrief(c) {
   let cards="";
   ["a1","a2","a3","a4"].forEach(dim=>{
     const q=AA_Q[dim];const score=c.aa[dim].score||0;
