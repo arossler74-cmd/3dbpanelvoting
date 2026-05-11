@@ -1649,6 +1649,7 @@ function renderCandidate(posId,candId) {
         ${STAGES.map(s=>`<option value="${s}" ${c.stage===s?"selected":""}>${STAGE_LABELS[s]}</option>`).join("")}
       </select>
       <span class="status-tag ${stCls}">${stLabel}</span>
+      <button onclick="deleteCandidate('${candId}','${posId}')" title="Delete candidate" style="padding:5px 10px;background:rgba(220,38,38,.08);color:#dc2626;border:1px solid rgba(220,38,38,.25);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;margin-left:4px;">🗑</button>
     </div>
   </div>
   <div class="tabs-bar">
@@ -1669,14 +1670,20 @@ function renderCandidate(posId,candId) {
 
 function renderProfile(c) {
   const dimColors={strategy:"#5b4fcf",ops:"#1a6b3c",cx:"#1d5fa6",pl:"#9a7230"};
-  const dimLabels={strategy:"Strategy & Transformation",ops:"Operations",cx:"CX Leadership",pl:"P&L Ownership"};
-  const dimBars=Object.keys(c.dims).map(k=>{const d=c.dims[k];const pct=Math.round(d.score/d.max*100);return`<div class="dim-bar-row"><div class="dim-name">${dimLabels[k]}</div><div class="dim-track"><div class="dim-fill" style="width:${pct}%;background:${dimColors[k]}"></div></div><div class="dim-pts">${d.score}/${d.max}</div></div>`;}).join("");
+  const fallbackLabels={strategy:"Strategy & Transformation",ops:"Operations",cx:"CX Leadership",pl:"P&L Ownership"};
+  // Use position-specific dimension labels if available
+  const posId = S.nav.positionId;
+  const pos = posId ? S.positions[posId] : null;
+  const posDims = getDimsForPos(pos);
+  const keyMap = {s:"strategy",o:"ops",c:"cx",p:"pl"};
+  const posLabels = {};
+  posDims.forEach(d => { posLabels[keyMap[d.key]||d.key] = d.label; });
+  const dimLabels = Object.assign({}, fallbackLabels, posLabels);
+  const dimBars=Object.keys(c.dims||{}).map(k=>{const d=c.dims[k];const sc=Number(d?.score)||0;const mx=Number(d?.max)||100;const pct=Math.min(100,Math.round(sc/mx*100));return`<div class="dim-bar-row"><div class="dim-name">${dimLabels[k]||k}</div><div class="dim-track"><div class="dim-fill" style="width:${pct}%;background:${dimColors[k]||"#6b7280"}"></div></div><div class="dim-pts">${sc}/${mx}</div></div>`;}).join("");
   const warn=c.warning?`<div class="warn-box">${c.warning}</div>`:"";
   const strengths=(c.strengths||[]).map(s=>`<div class="list-item">${s}</div>`).join("");
   const watches=(c.watchAreas||[]).map(w=>`<div class="list-item">${w}</div>`).join("");
   // Position scoring weights display (if position has custom weights)
-  const posId = S.nav.positionId;
-  const pos = posId ? S.positions[posId] : null;
   let weightedScoreHtml = "";
   if (pos?.scoringDims?.length && c.weightedScores) {
     const wRows = pos.scoringDims.map(dim => {
@@ -1994,6 +2001,21 @@ Rules: 5 to 7 dimensions. Weights must sum to exactly 100. Derive dimensions dir
   if (jdText && S.apiKey) setPosTab("scoring"); else render();
 };
 
+window.deleteCandidate = async function(candId, posId) {
+  const c = S.candidates[candId];
+  if (!c) return;
+  if (!confirm(`Remove ${c.name} from this position? The candidate record will be deleted.`)) return;
+  // Remove from position's candidateIds
+  if (posId && S.positions[posId]?.candidateIds) {
+    S.positions[posId].candidateIds = S.positions[posId].candidateIds.filter(id => id !== candId);
+    await fbUpdate(`positions/${posId}`, {candidateIds: S.positions[posId].candidateIds});
+  }
+  delete S.candidates[candId];
+  try { await fbRemove(`candidates/${candId}`); } catch(e) {}
+  try { await fbRemove(`resumes/${candId}`); } catch(e) {}
+  if (posId) navPos(posId); else navDash();
+};
+
 window.deletePosition = async function(posId) {
   const pos = S.positions[posId];
   if (!pos) return;
@@ -2078,7 +2100,12 @@ window.handleFileSelect = async function(file) {
     const dims = getDimsForPos(pos);
     const dimDesc = dims.map(d=>`${d.label}(max${d.max})`).join(", ");
     const dimKeys = dims.map(d=>d.key==="s"?"strategy":d.key==="o"?"ops":d.key==="c"?"cx":"pl");
-    const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score on exactly 4 dimensions that total 100 pts: ${dimDesc}. Scores must respect each dimension's max. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
+    // Build explicit key→label mapping so AI knows exactly what goes in each JSON field
+    const dimMapping = posDims.map((d,i) => {
+      const jsonKey = ["strategy","ops","cx","pl"][i] || "dim"+i;
+      return `"${jsonKey}" = ${d.label} (0-${d.max} pts)`;
+    }).join(", ");
+    const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score this candidate on 4 dimensions totaling 100 pts. Map scores to these EXACT JSON keys: ${dimMapping}. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
     const resp = await callAPI([{role:"user", content: "RESUME:\n" + resumeText.slice(0,6000) + "\n\n" + prompt}], 900);
     const parsed = JSON.parse(resp.replace(/```json\n?|```\n?/g,"").trim());
     const id = "c_" + Date.now();
