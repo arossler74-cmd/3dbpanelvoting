@@ -4337,3 +4337,11 @@ function applyDimsToModal(dims) {
   rows.forEach(r => container.appendChild(r));
   updateManTotal();
 }
+
+
+window.closeModal = function(id) { document.getElementById(id).classList.remove("open"); };
+document.querySelectorAll(".modal-overlay").forEach(el => { el.addEventListener("click", e=>{ if(e.target===el) el.classList.remove("open"); }); });
+document.getElementById("auth-pw").addEventListener("keydown", e=>{ if(e.key==="Enter") doAuth(); });
+</script>
+</body>
+</html>
