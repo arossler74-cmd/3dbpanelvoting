@@ -1677,7 +1677,13 @@ function renderProfile(c) {
   const posLabels = {};
   posDims.forEach(d => { posLabels[keyMap[d.key]||d.key] = d.label; });
   const dimLabels = Object.assign({}, fallbackLabels, posLabels);
-  const dimBars=Object.keys(c.dims||{}).map(k=>{const d=c.dims[k];const sc=Number(d?.score)||0;const mx=Number(d?.max)||100;const pct=Math.min(100,Math.round(sc/mx*100));return`<div class="dim-bar-row"><div class="dim-name">${dimLabels[k]||k}</div><div class="dim-track"><div class="dim-fill" style="width:${pct}%;background:${dimColors[k]||"#6b7280"}"></div></div><div class="dim-pts">${sc}/${mx}</div></div>`;}).join("");
+  // Use getCandDimsDisplay for consistent ordering (matches sliders)
+  const dispDimsForBars = getCandDimsDisplay(c, pos);
+  const barColors = ["#5b4fcf","#1a6b3c","#1d5fa6","#9a7230","#7c3aed","#059669"];
+  const dimBars = dispDimsForBars.map((d, i) => {
+    const pct = Math.min(100, Math.round(d.score/d.max*100));
+    return '<div class="dim-bar-row"><div class="dim-name">' + d.label + '</div><div class="dim-track"><div class="dim-fill" style="width:' + pct + '%;background:' + (barColors[i]||"#6b7280") + '"></div></div><div class="dim-pts">' + d.score + '/' + d.max + '</div></div>';
+  }).join("");
   const warn=c.warning?`<div class="warn-box">${c.warning}</div>`:"";
   const strengths=(c.strengths||[]).map(s=>`<div class="list-item">${s}</div>`).join("");
   const watches=(c.watchAreas||[]).map(w=>`<div class="list-item">${w}</div>`).join("");
@@ -1718,7 +1724,7 @@ function renderProfile(c) {
 
   const editPanel = isEditing
     ? "<div id=\"score-edit-panel\" style=\"padding:14px 0 4px;border-top:1px solid var(--border);margin-top:12px;\">" +
-      "<div style=\"font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;\">Adjust dimension scores</div>" +
+      "<div style=\"font-size:11px;color:var(--muted);margin-bottom:10px;padding-top:2px;\">Drag to adjust · recruiter override</div>" +
       editSliders +
       "<div style=\"text-align:right;font-size:12px;font-weight:600;color:var(--navy);margin:8px 0 14px;\">Total: <span id=\"edit-total\">" + editInitTotal + "</span>/100</div>" +
       "<div style=\"display:flex;gap:10px;\">" +
