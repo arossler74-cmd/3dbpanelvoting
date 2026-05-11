@@ -1531,11 +1531,16 @@ function renderScoringProfile(posId) {
   const dimBars = dims.map(dim => {
     const w = Number(dim.weight);
     const pct = Math.round(w/Math.max(total,1)*100);
+    const rationaleHtml = dim.rationale
+      ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;padding-left:0;">${dim.rationale}</div>` : "";
     return [
-      `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">`,
-        `<div style="font-size:12px;font-weight:500;color:var(--ink);width:180px;flex-shrink:0;">${dim.label}</div>`,
-        `<div style="flex:1;height:8px;background:var(--cream);border-radius:99px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--navy);border-radius:99px;opacity:.7;"></div></div>`,
-        `<div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--navy);width:36px;text-align:right;">${w}%</div>`,
+      `<div style="margin-bottom:10px;">`,
+        `<div style="display:flex;align-items:center;gap:10px;margin-bottom:3px;">`,
+          `<div style="font-size:12px;font-weight:500;color:var(--ink);width:180px;flex-shrink:0;">${dim.label}</div>`,
+          `<div style="flex:1;height:8px;background:var(--cream);border-radius:99px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--navy);border-radius:99px;opacity:.7;"></div></div>`,
+          `<div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--navy);width:36px;text-align:right;">${w}%</div>`,
+        `</div>`,
+        rationaleHtml,
       `</div>`
     ].join('');
   }).join('');
@@ -1968,17 +1973,10 @@ window.openAddCandidateForPos = function(posId) {
   S._addToPosId = posId;
   const pos = S.positions[posId];
   document.getElementById("modal-cand-sub").textContent = pos ? `Adding to: ${pos.title}` : "Adding candidate";
-  // Reset all form fields
+  // Reset all text fields
   ["man-name","man-role","man-co","man-loc"].forEach(id => { const el=document.getElementById(id); if(el) el.value=""; });
-  // Reset sliders to midpoint defaults
-  const defaults = {s:25, o:18, c:5, p:3};
-  for (const [k,v] of Object.entries(defaults)) {
-    const sl = document.getElementById("sl-"+k);
-    const sv = document.getElementById("sv-"+k);
-    if (sl) sl.value = v;
-    if (sv) sv.textContent = v;
-  }
-  updateManTotal();
+  // Apply position-specific dimension profile to sliders
+  applyDimsToModal(getDimsForPos(pos));
   // Reset drop zone
   const dz = document.getElementById("drop-zone");
   if (dz) dz.innerHTML = `<div class="drop-icon">📄</div><div class="drop-text"><strong>Click to upload PDF</strong> — requires API key</div>`;
@@ -1989,9 +1987,11 @@ window.addManualCandidate = async function() {
   const name = document.getElementById("man-name").value.trim();
   if (!name) { alert("Name is required."); return; }
   const id = "c_" + Date.now();
-  const s=+document.getElementById("sl-s").value, o=+document.getElementById("sl-o").value, cx=+document.getElementById("sl-c").value, pl=+document.getElementById("sl-p").value;
+  const slS=document.getElementById("sl-s"),slO=document.getElementById("sl-o"),slC=document.getElementById("sl-c"),slP=document.getElementById("sl-p");
+  const s=+slS.value,o=+slO.value,cx=+slC.value,pl=+slP.value;
+  const mxS=+(slS.getAttribute("data-max")||50),mxO=+(slO.getAttribute("data-max")||35),mxC=+(slC.getAttribute("data-max")||10),mxP=+(slP.getAttribute("data-max")||5);
   const cand = {id,name,role:document.getElementById("man-role").value||"",company:document.getElementById("man-co").value||"",location:document.getElementById("man-loc").value||"",stage:"screening",resumeScore:s+o+cx+pl,
-    dims:{strategy:{score:s,max:50},ops:{score:o,max:35},cx:{score:cx,max:10},pl:{score:pl,max:5}},
+    dims:{strategy:{score:s,max:mxS},ops:{score:o,max:mxO},cx:{score:cx,max:mxC},pl:{score:pl,max:mxP}},
     summary:"Manually added candidate.",strengths:[],watchAreas:[],warning:"",
     aa:{a1:{score:0,notes:"",qNotes:["","",""]},a2:{score:0,notes:"",qNotes:["","",""]},a3:{score:0,notes:"",qNotes:["","",""]},a4:{score:0,notes:"",qNotes:["","",""]}},
     rec:"",nextName:"",nextRole:"",interviewerName:"",recruiterName:"",recruiterEmail:"",meetingNotes:"",emailInstructions:"",emailText:""};
@@ -2033,7 +2033,10 @@ window.handleFileSelect = async function(file) {
     const posContext = pos
       ? `Position: ${pos.title}${pos.jdSummary ? ". JD summary: " + pos.jdSummary.slice(0,400) : ""}.`
       : "Position: General leadership role at 3 Day Blinds.";
-    const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score on 4 dimensions (total 100 pts): Strategy&Transformation(max50 — personal execution of transformation/growth initiatives with measurable outcomes), Operations(max35 — direct leadership of large teams 50+ people with P&L), CX(max10 — owned post-sale CX or contact center with hard metrics), P&L(max5 — direct P&L ownership at scale). Calibrate scores to this specific role — a District Sales Manager candidate should be scored on sales leadership and team development, not corporate transformation. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
+    const dims = getDimsForPos(pos);
+    const dimDesc = dims.map(d=>`${d.label}(max${d.max})`).join(", ");
+    const dimKeys = dims.map(d=>d.key==="s"?"strategy":d.key==="o"?"ops":d.key==="c"?"cx":"pl");
+    const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score on exactly 4 dimensions that total 100 pts: ${dimDesc}. Scores must respect each dimension's max. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
     const resp = await callAPI([{role:"user", content: "RESUME:
 " + resumeText.slice(0, 6000) + "
 
@@ -2041,7 +2044,7 @@ window.handleFileSelect = async function(file) {
     const parsed = JSON.parse(resp.replace(/```json\n?|```\n?/g,"").trim());
     const id = "c_" + Date.now();
     const cand = {id,name:parsed.name,role:parsed.currentRole,company:parsed.currentCompany,location:parsed.location,stage:"screening",resumeScore:parsed.totalScore,
-      dims:{strategy:{score:parsed.dims.strategy,max:50},ops:{score:parsed.dims.ops,max:35},cx:{score:parsed.dims.cx,max:10},pl:{score:parsed.dims.pl,max:5}},
+      dims:{strategy:{score:parsed.dims.strategy,max:+(document.getElementById("sl-s")?.getAttribute("data-max")||50)},ops:{score:parsed.dims.ops,max:+(document.getElementById("sl-o")?.getAttribute("data-max")||35)},cx:{score:parsed.dims.cx,max:+(document.getElementById("sl-c")?.getAttribute("data-max")||10)},pl:{score:parsed.dims.pl,max:+(document.getElementById("sl-p")?.getAttribute("data-max")||5)}},
       summary:parsed.summary,strengths:parsed.strengths,watchAreas:parsed.watchAreas,warning:"",
       aa:{a1:{score:0,notes:"",qNotes:["","",""]},a2:{score:0,notes:"",qNotes:["","",""]},a3:{score:0,notes:"",qNotes:["","",""]},a4:{score:0,notes:"",qNotes:["","",""]}},
       rec:"",nextName:"",nextRole:"",interviewerName:"",recruiterName:"",recruiterEmail:"",meetingNotes:"",emailInstructions:"",emailText:""};
@@ -2098,25 +2101,45 @@ window.processJD = async function() {
   const posId = S._jdPosId || S.nav.positionId;
   if (!posId || !S.positions[posId]) { closeModal("modal-jd"); return; }
   const pasteText = document.getElementById("jd-paste").value.trim();
-  const jdFile = document.getElementById("jd-file-input").files[0];
-  const statusEl = document.getElementById("jd-status");
+  const jdFile    = document.getElementById("jd-file-input").files[0];
+  const statusEl  = document.getElementById("jd-status");
   if (!pasteText && !jdFile) { alert("Please upload a PDF or paste text."); return; }
-  if (!S.apiKey && jdFile) { alert("API key required for PDF analysis. Paste text instead."); return; }
+  // No API key — store raw paste, skip scoring dims
   if (!S.apiKey && pasteText) {
     S.positions[posId].jdSummary = pasteText;
     await fbUpdate(`positions/${posId}`, {jdSummary: pasteText});
     closeModal("modal-jd"); setPosTab("jd"); return;
   }
-  statusEl.textContent = "Processing...";
+  if (!S.apiKey && jdFile) { alert("API key required for PDF analysis. Paste text instead."); return; }
+  statusEl.textContent = "Extracting summary and building scoring profile...";
   try {
-    const prompt = "Extract a structured summary of this job description in 3 paragraphs: (1) Company and role overview, (2) Key responsibilities, (3) Qualifications and compensation. Keep it under 300 words. Plain text only.";
-    let messages;
-    if (pasteText) { messages = [{role:"user",content:pasteText+"\n\n"+prompt}]; }
-    else { const jdText=await extractPDFText(jdFile); messages=[{role:"user",content:jdText+"\n\n"+prompt}]; }
-    const summary = await callAPI(messages, 600, jdFile?"pdfs-2024-09-25":null);
-    S.positions[posId].jdSummary = summary;
-    await fbUpdate(`positions/${posId}`, {jdSummary: summary});
-    closeModal("modal-jd"); setPosTab("jd");
+    const jdText = pasteText || await extractPDFText(jdFile);
+    const prompt = `You are a senior talent strategist. Analyze this job description and return ONLY valid JSON with no markdown fences:
+{"summary":"3-paragraph plain-text summary under 280 words: para1=company and role overview, para2=key responsibilities, para3=qualifications and compensation","scoringDims":[{"key":"dim1","label":"Short label 3-5 words","weight":25,"rationale":"One sentence why this matters for this role."}]}
+Rules: 5 to 7 dimensions. Weights must sum to exactly 100. Derive dimensions directly from THIS JD — make labels role-specific, not generic. Higher weight = more critical to success in THIS role.`;
+    const raw     = await callAPI([{role:"user", content:"JOB DESCRIPTION:\n" + jdText.slice(0,5000) + "\n\n" + prompt}], 1400);
+    const clean   = raw.replace(/```json\n?|```\n?/g,"").trim();
+    const parsed  = JSON.parse(clean);
+    const summary = parsed.summary || jdText.slice(0,600);
+    const rawDims = (parsed.scoringDims || []).map((d,i) => ({
+      key:      String(d.key      || "dim"+i),
+      label:    String(d.label    || "Dimension "+(i+1)),
+      weight:   Number(d.weight)  || 0,
+      rationale:String(d.rationale|| "")
+    }));
+    // Normalise weights to sum exactly 100
+    const wSum = rawDims.reduce((s,d)=>s+d.weight, 0);
+    if (wSum > 0 && wSum !== 100) {
+      rawDims.forEach(d => { d.weight = Math.round(d.weight / wSum * 100); });
+      const drift = 100 - rawDims.reduce((s,d)=>s+d.weight,0);
+      if (rawDims.length) rawDims[rawDims.length-1].weight += drift;
+    }
+    S.positions[posId].jdSummary  = summary;
+    S.positions[posId].scoringDims = rawDims;
+    await fbUpdate(`positions/${posId}`, {jdSummary: summary, scoringDims: rawDims});
+    statusEl.textContent = "Done.";
+    closeModal("modal-jd");
+    setPosTab("scoring");  // go straight to Scoring Profile tab so user sees the result
   } catch(e) { statusEl.textContent = "Error: " + e.message; }
 };
 
@@ -4027,6 +4050,44 @@ async function callAPI(messages, maxTokens=800, betaHeader=null, systemMsg=null)
   const data = await resp.json();
   if (data.error) throw new Error(data.error.message);
   return data.choices[0].message.content;
+}
+
+// ── POSITION SCORING DIMENSIONS ──────────────────────────────────────────────
+const POSITION_DIMS = {
+  dsm: [
+    {key:"s", label:"Sales Leadership & Coaching", max:40, def:20},
+    {key:"o", label:"Field & Self-Gen Activity",   max:30, def:15},
+    {key:"c", label:"Recruiting & Culture",        max:20, def:10},
+    {key:"p", label:"Business Acumen & KPMs",     max:10, def:5}
+  ],
+  default: [
+    {key:"s", label:"Strategy & Transformation", max:50, def:25},
+    {key:"o", label:"Operations Leadership",     max:35, def:18},
+    {key:"c", label:"CX Ownership",             max:10, def:5},
+    {key:"p", label:"P&L Accountability",       max:5,  def:3}
+  ]
+};
+
+function getDimsForPos(pos) {
+  if (!pos) return POSITION_DIMS.default;
+  const t = (pos.title||"").toLowerCase();
+  if (t.includes("district sales") || t.includes(" dsm") || t.includes("sales manager") || t.includes("sales director")) {
+    return POSITION_DIMS.dsm;
+  }
+  return POSITION_DIMS.default;
+}
+
+function applyDimsToModal(dims) {
+  dims.forEach(d => {
+    const sl  = document.getElementById("sl-"+d.key);
+    const sv  = document.getElementById("sv-"+d.key);
+    const row = sl ? sl.closest(".slider-row") : null;
+    const nm  = row ? row.querySelector(".slider-name") : null;
+    if (nm) nm.textContent = d.label + " (0–" + d.max + ")";
+    if (sl) { sl.max = d.max; sl.value = d.def; sl.setAttribute("data-max", d.max); }
+    if (sv) sv.textContent = d.def;
+  });
+  updateManTotal();
 }
 
 window.closeModal = function(id) { document.getElementById(id).classList.remove("open"); };
