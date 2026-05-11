@@ -2478,14 +2478,15 @@ window.copyEmail = function(candId) {
 // RESUME TAB
 // ============================================================
 function renderResume(c) {
-  const dimColors = {strategy:"#5b4fcf",ops:"#1a6b3c",cx:"#1d5fa6",pl:"#9a7230"};
-  const dimLabels = {strategy:"Strategy & Transformation",ops:"Operations",cx:"CX Leadership",pl:"P&L Ownership"};
-  const dimBars = Object.keys(c.dims).map(k => {
-    const d = c.dims[k]; const pct = Math.round(d.score/d.max*100);
+  const posId   = S.nav.positionId;
+  const pos     = posId ? S.positions[posId] : null;
+  const dispDims = getCandDimsDisplay(c, pos);
+  const dimBars = dispDims.map(d => {
+    const pct = Math.min(100, Math.round(d.score/d.max*100));
     return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-      <div style="font-size:11px;color:var(--muted);width:130px;flex-shrink:0;">${dimLabels[k]}</div>
+      <div style="font-size:11px;color:var(--muted);width:130px;flex-shrink:0;">${d.label}</div>
       <div style="flex:1;height:6px;background:var(--cream);border-radius:99px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${dimColors[k]};border-radius:99px;"></div>
+        <div style="width:${pct}%;height:100%;background:${d.color};border-radius:99px;"></div>
       </div>
       <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);width:36px;text-align:right;">${d.score}/${d.max}</div>
     </div>`;
@@ -3074,7 +3075,7 @@ function renderLaunchPanelUI(c, posId) {
   const aaAvgs = ["a1","a2","a3","a4"].map(dim => c.aa[dim].score||0);
   const aaAvg = aaAvgs.reduce((a,b)=>a+b,0)/4;
   const hasInterviewData = aaAvgs.some(s=>s>0);
-  const ready = c.stage === "panel" || c.stage === "offer" || c.stage === "hired" || c.stage === "interviewing";
+  const ready = true; // allow panel vote from any stage
 
   return `<div>
     <!-- Header card -->
@@ -3092,7 +3093,7 @@ function renderLaunchPanelUI(c, posId) {
       <button onclick="launchPanel('${c.id}','${posId}')" ${ready?"":"disabled"} style="padding:11px 24px;background:var(--navy);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:${ready?"pointer":"not-allowed"};opacity:${ready?1:.5};display:inline-flex;align-items:center;gap:8px;">
         🗳 Launch Panel Vote
       </button>
-      ${!ready?`<div style="font-size:11px;color:var(--muted);margin-top:8px;">Move candidate to Interviewing, Panel, or Offer stage first.</div>`:""}
+
     </div>
 
     <!-- What panelists will see -->
@@ -3251,6 +3252,83 @@ function renderPanelComments(votes) {
 }
 
 // ── Panel management actions ─────────────────────────────────
+function renderTimeline(c) {
+  // Build timeline events from available candidate data
+  const events = [];
+  const posId = S.nav.positionId;
+  const pos   = posId ? S.positions[posId] : null;
+
+  // Added to pipeline
+  if (c.id) {
+    const ts = c.id.startsWith("c_") ? parseInt(c.id.slice(2)) : null;
+    events.push({ts: ts||Date.now(), icon:"👤", color:"#1d5fa6", title:"Added to pipeline", sub: pos ? pos.title : ""});
+  }
+
+  // Interview sessions
+  if (c.interviewSessions) {
+    Object.values(c.interviewSessions).forEach(sess => {
+      if (sess.createdAt) events.push({ts:sess.createdAt, icon:"📋", color:"#5b4fcf", title:"Interview assigned", sub:`Assigned to ${sess.interviewerName||sess.interviewerEmail||"interviewer"}`});
+      if (sess.completedAt) events.push({ts:sess.completedAt, icon:"✅", color:"#1a6b3c", title:"Interview completed", sub:`${sess.interviewerName||sess.interviewerEmail||"Interviewer"} · 4A avg: ${sess.aaAvg||"—"} · ${sess.recommendation||"pending"}`});
+    });
+  }
+
+  // Panel vote
+  if (c.panelSurveyId) {
+    events.push({ts: c.panelLaunchedAt||Date.now(), icon:"🗳", color:"#c8a96e", title:"Panel vote launched", sub:`Survey ID: ${c.panelSurveyId.slice(0,12)}...`});
+  }
+
+  // Recommendation
+  if (c.rec) {
+    const recLabels = {pass:"Passed",screen:"Advanced to screen",next:"Advanced to next interview",panel:"Advanced to panel",hire:"Hire recommended"};
+    events.push({ts: c.recAt||Date.now(), icon:"🏷", color:c.rec==="hire"?"#1a6b3c":c.rec==="pass"?"#dc2626":"#5b4fcf", title:"Recommendation recorded", sub: recLabels[c.rec]||c.rec});
+  }
+
+  // Sort chronologically
+  events.sort((a,b) => a.ts - b.ts);
+
+  if (!events.length) return `<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">No timeline events yet.</div>`;
+
+  const fmt = ts => {
+    if (!ts) return "—";
+    const d = new Date(ts);
+    return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) + " · " + d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  };
+
+  const rows = events.map((ev, i) => `
+    <div style="display:flex;gap:16px;margin-bottom:${i<events.length-1?"0":"0"};">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="width:36px;height:36px;border-radius:50%;background:${ev.color}18;border:2px solid ${ev.color}40;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${ev.icon}</div>
+        ${i<events.length-1?`<div style="width:2px;flex:1;min-height:24px;background:var(--border);margin:4px 0;"></div>`:""}
+      </div>
+      <div style="padding-top:6px;padding-bottom:${i<events.length-1?"20px":"0"};">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;">${ev.title}</div>
+        ${ev.sub?`<div style="font-size:12px;color:var(--muted);margin-bottom:3px;">${ev.sub}</div>`:""}
+        <div style="font-size:11px;color:var(--faint);">${fmt(ev.ts)}</div>
+      </div>
+    </div>`).join("");
+
+  // Stage progress bar
+  const stageOrder = ["sourced","screening","interviewing","panel","offer","hired"];
+  const curIdx = stageOrder.indexOf(c.stage);
+  const stagePills = stageOrder.map((st, i) => {
+    const done = i <= curIdx;
+    const bg   = done ? STAGE_COLORS[st]||"var(--navy)" : "var(--cream)";
+    const clr  = done ? "white" : "var(--muted)";
+    return `<div style="flex:1;text-align:center;padding:5px 4px;background:${bg};color:${clr};font-size:10px;font-weight:600;border-radius:${i===0?"6px 0 0 6px":i===stageOrder.length-1?"0 6px 6px 0":"0"};border-right:${i<stageOrder.length-1?"1px solid rgba(255,255,255,.2)":"none"};">${STAGE_LABELS[st]||st}</div>`;
+  }).join("");
+
+  return `<div style="padding:24px;max-width:640px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Pipeline progress</div>
+      <div style="display:flex;border-radius:6px;overflow:hidden;border:1px solid var(--border);">${stagePills}</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:20px 20px 16px;">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px;">Activity log</div>
+      ${rows}
+    </div>
+  </div>`;
+}
+
 window.launchPanel = async function(candId, posId) {
   const c = S.candidates[candId];
   const pos = S.positions[posId];
@@ -3368,16 +3446,19 @@ async function renderPanelVotingPage(surveyId, user) {
   }
 
   const prof = survey.candidateProfile || {};
-  const dimColors = {strategy:"#5b4fcf",ops:"#1a6b3c",cx:"#1d5fa6",pl:"#9a7230"};
-  const dimLabels = {strategy:"Strategy",ops:"Operations",cx:"CX Leadership",pl:"P&L"};
+  // Use position-aware dim labels
+  const _panelPosId  = S.nav.positionId;
+  const _panelPos    = _panelPosId ? S.positions[_panelPosId] : null;
+  const _panelCandObj = prof.dims ? {dims: prof.dims} : {dims:{}};
+  const dispDims2    = getCandDimsDisplay(_panelCandObj, _panelPos);
 
   // Dimension bars
-  const dimBars = prof.dims ? Object.keys(prof.dims).map(k => {
-    const d = prof.dims[k]; const pct = Math.round(d.score/d.max*100);
+  const dimBars = dispDims2.length ? dispDims2.map(d => {
+    const pct = Math.min(100, Math.round(d.score/d.max*100));
     return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-      <div style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0;">${dimLabels[k]||k}</div>
+      <div style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0;">${d.label}</div>
       <div style="flex:1;height:6px;background:var(--cream);border-radius:99px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${dimColors[k]||"var(--navy)"};border-radius:99px;"></div>
+        <div style="width:${pct}%;height:100%;background:${d.color};border-radius:99px;"></div>
       </div>
       <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);width:32px;text-align:right;">${d.score}/${d.max}</div>
     </div>`;
@@ -4129,6 +4210,24 @@ const POSITION_DIMS = {
     {key:"p", label:"P&L Accountability",       max:5,  def:3}
   ]
 };
+
+// Returns display-ready dims for a candidate in the context of a position
+// Always uses position-specific labels (JD-derived or hardcoded fallback)
+function getCandDimsDisplay(c, pos) {
+  const posDims = getDimsForPos(pos);
+  const keyMap  = {s:"strategy", o:"ops", c:"cx", p:"pl"};
+  const colors  = {s:"#5b4fcf", o:"#1a6b3c", c:"#1d5fa6", p:"#9a7230"};
+  return posDims.map(d => {
+    const ck  = keyMap[d.key] || d.key;
+    const raw = c.dims?.[ck] || {};
+    return {
+      label: d.label,
+      score: Number(raw.score) || 0,
+      max:   Number(raw.max)   || Number(d.max) || 100,
+      color: colors[d.key]     || "#6b7280"
+    };
+  });
+}
 
 function getDimsForPos(pos) {
   // If position has JD-derived scoringDims, use top 4 by weight as the 4 slider dims
