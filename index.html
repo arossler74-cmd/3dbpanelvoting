@@ -1121,7 +1121,7 @@ function renderSidebar() {
     html += `<div class="sb-positions">`;
     Object.values(S.positions).sort((a,b)=>a.title.localeCompare(b.title)).forEach(pos => {
       const active = n.positionId===pos.id && n.view!=="dashboard" ? "active":"";
-      const cids = pos.candidateIds||[];
+      const cids = (pos.candidateIds||[]).filter(id=>S.candidates[id]);
       const dotCls = pos.status==="active"?"dot-active":pos.status==="hold"?"dot-hold":"dot-filled";
       html += `<div class="sb-pos ${active}" onclick="navPos('${pos.id}')">
         <div class="sb-pos-title">${pos.title}</div>
@@ -2101,9 +2101,9 @@ window.handleFileSelect = async function(file) {
     const dimDesc = dims.map(d=>`${d.label}(max${d.max})`).join(", ");
     const dimKeys = dims.map(d=>d.key==="s"?"strategy":d.key==="o"?"ops":d.key==="c"?"cx":"pl");
     // Build explicit key→label mapping so AI knows exactly what goes in each JSON field
-    const dimMapping = posDims.map((d,i) => {
+    const dimMapping = dims.map((d,i) => {
       const jsonKey = ["strategy","ops","cx","pl"][i] || "dim"+i;
-      return `"${jsonKey}" = ${d.label} (0-${d.max} pts)`;
+      return jsonKey + " = " + d.label + " (0-" + d.max + " pts)";
     }).join(", ");
     const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score this candidate on 4 dimensions totaling 100 pts. Map scores to these EXACT JSON keys: ${dimMapping}. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
     const resp = await callAPI([{role:"user", content: "RESUME:\n" + resumeText.slice(0,6000) + "\n\n" + prompt}], 900);
@@ -4131,6 +4131,19 @@ const POSITION_DIMS = {
 };
 
 function getDimsForPos(pos) {
+  // If position has JD-derived scoringDims, use top 4 by weight as the 4 slider dims
+  if (pos && Array.isArray(pos.scoringDims) && pos.scoringDims.length >= 1) {
+    const sorted = [...pos.scoringDims].sort((a,b) => Number(b.weight)-Number(a.weight));
+    const top4   = sorted.slice(0,4);
+    const keys   = ["s","o","c","p"];
+    return top4.map((d,i) => ({
+      key:   keys[i],
+      label: d.label,
+      max:   Number(d.weight),
+      def:   Math.round(Number(d.weight)/2)
+    }));
+  }
+  // Fall back to hardcoded profile by position title
   if (!pos) return POSITION_DIMS.default;
   const t = (pos.title||"").toLowerCase();
   if (t.includes("district sales") || t.includes("dsm") || t.includes("sales manager") || t.includes("sales director")) {
