@@ -2087,46 +2087,75 @@ window.doJDDrop = function(e) { e.preventDefault(); document.getElementById("jd-
 window.handleFileSelect = async function(file) {
   if (!S.apiKey) { alert("Add your API key in Settings to enable AI resume analysis."); return; }
   const dz = document.getElementById("drop-zone");
-  dz.innerHTML = `<div class="drop-icon">⏳</div><div class="drop-text">Reading PDF and analyzing...</div>`;
+  dz.innerHTML = '<div class="drop-icon">⏳</div><div class="drop-text">Reading PDF and analyzing...</div>';
   try {
     const resumeText = await extractPDFText(file);
     if (!resumeText || resumeText.length < 100) throw new Error("Could not extract text from PDF. Try a text-based PDF.");
-    // Build a dynamic prompt using the current position context
+
     const posId = S._addToPosId;
-    const pos = posId ? S.positions[posId] : null;
+    const pos   = posId ? S.positions[posId] : null;
     const posContext = pos
-      ? `Position: ${pos.title}${pos.jdSummary ? ". JD summary: " + pos.jdSummary.slice(0,400) : ""}.`
+      ? "Position: " + pos.title + (pos.jdSummary ? ". JD summary: " + pos.jdSummary.slice(0,400) : "") + "."
       : "Position: General leadership role at 3 Day Blinds.";
-    const dims = getDimsForPos(pos);
-    const dimDesc = dims.map(d=>`${d.label}(max${d.max})`).join(", ");
-    const dimKeys = dims.map(d=>d.key==="s"?"strategy":d.key==="o"?"ops":d.key==="c"?"cx":"pl");
-    // Build explicit key→label mapping so AI knows exactly what goes in each JSON field
-    const dimMapping = dims.map((d,i) => {
-      const jsonKey = ["strategy","ops","cx","pl"][i] || "dim"+i;
-      return jsonKey + " = " + d.label + " (0-" + d.max + " pts)";
-    }).join(", ");
-    const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score this candidate on 4 dimensions totaling 100 pts. Map scores to these EXACT JSON keys: ${dimMapping}. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
-    const resp = await callAPI([{role:"user", content: "RESUME:\n" + resumeText.slice(0,6000) + "\n\n" + prompt}], 900);
-    const parsed = JSON.parse(resp.replace(/```json\n?|```\n?/g,"").trim());
-    const id = "c_" + Date.now();
-    const cand = {id,name:parsed.name,role:parsed.currentRole,company:parsed.currentCompany,location:parsed.location,stage:"screening",resumeScore:parsed.totalScore,
-      dims:{strategy:{score:parsed.dims.strategy,max:+(document.getElementById("sl-s")?.getAttribute("data-max")||50)},ops:{score:parsed.dims.ops,max:+(document.getElementById("sl-o")?.getAttribute("data-max")||35)},cx:{score:parsed.dims.cx,max:+(document.getElementById("sl-c")?.getAttribute("data-max")||10)},pl:{score:parsed.dims.pl,max:+(document.getElementById("sl-p")?.getAttribute("data-max")||5)}},
-      summary:parsed.summary,strengths:parsed.strengths,watchAreas:parsed.watchAreas,warning:"",
-      aa:{a1:{score:0,notes:"",qNotes:["","",""]},a2:{score:0,notes:"",qNotes:["","",""]},a3:{score:0,notes:"",qNotes:["","",""]},a4:{score:0,notes:"",qNotes:["","",""]}},
-      rec:"",nextName:"",nextRole:"",interviewerName:"",recruiterName:"",recruiterEmail:"",meetingNotes:"",emailInstructions:"",emailText:""};
+
+    // Use ALL position scoring dims (not just top 4)
+    const scoringDims = (pos && pos.scoringDims && pos.scoringDims.length)
+      ? pos.scoringDims
+      : getDimsForPos(pos).map((d,i) => ({
+          key: ["strategy","ops","cx","pl"][i]||("d"+i),
+          label: d.label, weight: d.max
+        }));
+
+    // Build JSON template and dim descriptions for the prompt
+    const dimTemplate = scoringDims.reduce((o,d) => { o[d.key] = 0; return o; }, {});
+    const dimDesc = scoringDims.map(d => '"' + d.key + '" = ' + d.label + " (0-" + d.weight + " pts, weight " + d.weight + "%)").join("; ");
+    const totalMax = scoringDims.reduce((s,d) => s + Number(d.weight), 0);
+
+    const prompt = "Analyze this resume for the following role at 3 Day Blinds. " + posContext +
+      " Score this candidate on ALL " + scoringDims.length + " dimensions below. Each key maps directly to a score. Scores must not exceed each dimension max. " +
+      "Dimensions: " + dimDesc + ". " +
+      "totalScore = sum of all dimension scores (max " + totalMax + "). " +
+      "Return ONLY valid JSON, no markdown: {" +
+        '"name":"","currentRole":"","currentCompany":"","location":"",' +
+        '"summary":"2-3 sentences",' +
+        '"dims":' + JSON.stringify(dimTemplate) + "," +
+        '"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}';
+
+    const resp   = await callAPI([{role:"user", content: "RESUME:\n" + resumeText.slice(0,6000) + "\n\n" + prompt}], 1000);
+    const parsed = JSON.parse(resp.indexOf("{")>=0 ? resp.slice(resp.indexOf("{"),resp.lastIndexOf("}")+1) : resp);
+
+    // Build dims object using ALL scoring dims
+    const dimsObj = {};
+    scoringDims.forEach(d => {
+      dimsObj[d.key] = {score: Number(parsed.dims?.[d.key]) || 0, max: Number(d.weight) || 0};
+    });
+    const totalScore = Object.values(dimsObj).reduce((s,d) => s + d.score, 0);
+
+    const id   = "c_" + Date.now();
+    const cand = {
+      id, name:parsed.name, role:parsed.currentRole, company:parsed.currentCompany,
+      location:parsed.location, stage:"screening", resumeScore:totalScore,
+      dims: dimsObj,
+      summary:parsed.summary, strengths:parsed.strengths, watchAreas:parsed.watchAreas, warning:"",
+      aa:{a1:{score:0,notes:"",qNotes:["","",""]},a2:{score:0,notes:"",qNotes:["","",""]},
+          a3:{score:0,notes:"",qNotes:["","",""]},a4:{score:0,notes:"",qNotes:["","",""]}},
+      rec:"",nextName:"",nextRole:"",interviewerName:"",recruiterName:"",recruiterEmail:"",
+      meetingNotes:"",emailInstructions:"",emailText:""
+    };
     S.candidates[id] = cand;
-    await fbSet(`candidates/${id}`, cand);
+    await fbSet("candidates/" + id, cand);
     if (posId && S.positions[posId]) {
       if (!S.positions[posId].candidateIds) S.positions[posId].candidateIds = [];
       if (!S.positions[posId].candidateIds.includes(id)) S.positions[posId].candidateIds.push(id);
-      await fbUpdate(`positions/${posId}`, {candidateIds: S.positions[posId].candidateIds});
+      await fbUpdate("positions/" + posId, {candidateIds: S.positions[posId].candidateIds});
     }
     closeModal("modal-cand");
     if (posId) navCand(posId, id); else render();
   } catch(e) {
-    dz.innerHTML = `<div class="drop-icon">⚠️</div><div class="drop-text">Analysis failed — ${e.message}</div>`;
+    dz.innerHTML = '<div class="drop-icon">⚠️</div><div class="drop-text">Analysis failed — ' + e.message + '</div>';
   }
 };
+
 
 // ============================================================
 // API KEY — saved to Firebase
@@ -4212,19 +4241,35 @@ const POSITION_DIMS = {
 };
 
 // Returns display-ready dims for a candidate in the context of a position
-// Always uses position-specific labels (JD-derived or hardcoded fallback)
+// Supports both N-dim (new, pos.scoringDims keys) and 4-slot (legacy) formats
 function getCandDimsDisplay(c, pos) {
+  const fallbackColors = ["#5b4fcf","#1a6b3c","#1d5fa6","#9a7230","#7c3aed","#059669","#dc2626"];
+  const legacyKeyMap   = {s:"strategy", o:"ops", c:"cx", p:"pl"};
+  const legacyColors   = {s:"#5b4fcf", o:"#1a6b3c", c:"#1d5fa6", p:"#9a7230"};
+
+  // N-dim format: candidate dims keys match pos.scoringDims keys directly
+  const scoringDims = pos?.scoringDims;
+  if (scoringDims && scoringDims.length) {
+    return scoringDims.map((d, i) => {
+      const raw = c.dims?.[d.key] || {};
+      return {
+        label: d.label,
+        score: Number(raw.score) || 0,
+        max:   Number(raw.max)   || Number(d.weight) || 100,
+        color: fallbackColors[i % fallbackColors.length]
+      };
+    });
+  }
+  // Legacy 4-slot format (getDimsForPos top-4 mapping)
   const posDims = getDimsForPos(pos);
-  const keyMap  = {s:"strategy", o:"ops", c:"cx", p:"pl"};
-  const colors  = {s:"#5b4fcf", o:"#1a6b3c", c:"#1d5fa6", p:"#9a7230"};
   return posDims.map(d => {
-    const ck  = keyMap[d.key] || d.key;
+    const ck  = legacyKeyMap[d.key] || d.key;
     const raw = c.dims?.[ck] || {};
     return {
       label: d.label,
       score: Number(raw.score) || 0,
       max:   Number(raw.max)   || Number(d.max) || 100,
-      color: colors[d.key]     || "#6b7280"
+      color: legacyColors[d.key] || "#6b7280"
     };
   });
 }
