@@ -1699,10 +1699,41 @@ function renderProfile(c) {
     </div>${wRows}</div>`;
   }
 
-  return `${warn}<div class="profile-grid">
+  // Score editing panel
+  const isEditing = _scoreEditId === c.id;
+  const dispDims  = getCandDimsDisplay(c, pos);
+
+  let editSliders = "";
+  let editInitTotal = 0;
+  dispDims.forEach((d, i) => {
+    editInitTotal += d.score;
+    editSliders +=
+      "<div style=\"display:flex;align-items:center;gap:10px;margin-bottom:9px;\">" +
+      "<div style=\"font-size:12px;color:var(--muted);min-width:165px;flex-shrink:0;line-height:1.3;\">" + d.label + "</div>" +
+      "<input type=\"range\" min=\"0\" max=\"" + d.max + "\" value=\"" + d.score + "\" id=\"sedit_" + i + "\"" +
+      " style=\"flex:1;accent-color:var(--navy);\" data-vid=\"sval_" + i + "\" oninput=\"var v=document.getElementById(this.dataset.vid);if(v)v.textContent=this.value;updateEditTotal();\">" +
+      "<div style=\"font-family:DM Mono,monospace;font-size:12px;min-width:46px;text-align:right;\"><span id=\"sval_" + i + "\">" + d.score + "</span>/" + d.max + "</div>" +
+      "</div>";
+  });
+
+  const editPanel = isEditing
+    ? "<div id=\"score-edit-panel\" style=\"padding:14px 0 4px;border-top:1px solid var(--border);margin-top:12px;\">" +
+      "<div style=\"font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;\">Adjust dimension scores</div>" +
+      editSliders +
+      "<div style=\"text-align:right;font-size:12px;font-weight:600;color:var(--navy);margin:8px 0 14px;\">Total: <span id=\"edit-total\">" + editInitTotal + "</span>/100</div>" +
+      "<div style=\"display:flex;gap:10px;\">" +
+      "<button onclick=\"saveScoreEdits()\" style=\"padding:8px 20px;background:var(--navy);color:white;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;\">Save scores</button>" +
+      "<button onclick=\"cancelScoreEdit()\" style=\"padding:8px 16px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:7px;font-size:13px;cursor:pointer;\">Cancel</button>" +
+      "</div></div>"
+    : "";
+
+  const editBtn = isEditing ? "" :
+    "<button onclick=\"openScoreEdit(\'" + c.id + "\');\" style=\"float:right;padding:4px 12px;background:var(--cream);color:var(--navy);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;margin-top:-2px;\">✏ Adjust</button>";
+
+    return `${warn}<div class="profile-grid">
     <div class="pcard full-card"><div class="pcard-title">Summary</div><div class="summary-text">${c.summary||"—"}</div></div>
     ${weightedScoreHtml}
-    <div class="pcard"><div class="pcard-title">Evaluation Scores</div>${dimBars}</div>
+    <div class="pcard"><div class="pcard-title">Evaluation Scores ${editBtn}</div>${dimBars}${editPanel}</div>
     <div class="pcard"><div class="pcard-title" style="color:var(--adv)">✓ Strengths</div>${strengths||"—"}</div>
     <div class="pcard full-card"><div class="pcard-title" style="color:var(--warn)">⚠ Watch areas</div>${watches||"—"}</div>
   </div>`;
@@ -1889,6 +1920,7 @@ const DEFAULT_SCORING_DIMS = [
 ];
 
 let _editingWeights = [];
+let _scoreEditId = null; // tracks which candidate has scores open for editing
 
 window.openEditPosition = function(posId) {
   const pos = S.positions[posId];
@@ -1997,6 +2029,62 @@ Rules: 5 to 7 dimensions. Weights must sum to exactly 100. Derive dimensions dir
   if (btn) { btn.textContent = "Create Position"; btn.style.pointerEvents = ""; }
   closeModal("modal-pos"); navPos(id);
   if (jdText && S.apiKey) setPosTab("scoring"); else render();
+};
+
+window.openScoreEdit = function(candId) {
+  _scoreEditId = candId;
+  renderMain();
+};
+
+window.cancelScoreEdit = function() {
+  _scoreEditId = null;
+  renderMain();
+};
+
+window.updateEditTotal = function() {
+  const sliders = document.querySelectorAll("#score-edit-panel input[type=range]");
+  const total = Array.from(sliders).reduce((s,el) => s + (+el.value||0), 0);
+  const el = document.getElementById("edit-total");
+  if (el) el.textContent = total;
+};
+
+window.saveScoreEdits = async function(candId) {
+  if (!candId) candId = _scoreEditId;
+  const c = S.candidates[candId];
+  if (!c) return;
+  const sliders = Array.from(document.querySelectorAll("#score-edit-panel input[type=range]"));
+  if (!sliders.length) return;
+
+  // Map slider values back to c.dims using data-label matching
+  const posId = S.nav.positionId;
+  const pos   = posId ? S.positions[posId] : null;
+  const disp  = getCandDimsDisplay(c, pos);
+  const newDims = {};
+  disp.forEach((d, i) => {
+    const sl = sliders[i];
+    if (!sl) return;
+    const newScore = +sl.value || 0;
+    // Find the key in c.dims that corresponds to this display dim
+    const scoringDims = pos?.scoringDims;
+    if (scoringDims && scoringDims[i]) {
+      const key = scoringDims[i].key;
+      newDims[key] = {score: newScore, max: d.max};
+    } else {
+      // Legacy 4-slot fallback
+      const legacyKeys = ["strategy","ops","cx","pl"];
+      if (legacyKeys[i]) newDims[legacyKeys[i]] = {score: newScore, max: d.max};
+    }
+  });
+
+  const newTotal = Object.values(newDims).reduce((s,d) => s + d.score, 0);
+  Object.assign(c.dims, newDims);
+  c.resumeScore = newTotal;
+  S.candidates[candId].dims = {...c.dims, ...newDims};
+  S.candidates[candId].resumeScore = newTotal;
+
+  await fbUpdate("candidates/" + candId, {dims: S.candidates[candId].dims, resumeScore: newTotal});
+  _scoreEditId = null;
+  renderMain();
 };
 
 window.deleteCandidate = async function(candId, posId) {
