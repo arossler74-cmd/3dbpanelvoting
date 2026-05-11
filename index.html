@@ -3490,13 +3490,7 @@ window.launchPanel = async function(candId, posId) {
     watchAreas: c.watchAreas||[],
     warning: c.warning||"",
     positionTitle: pos?.title||"",
-    aaAvg: aaAvg,
-    aaDims: {
-      a1: {score: c.aa.a1.score||0, notes: c.aa.a1.notes||""},
-      a2: {score: c.aa.a2.score||0, notes: c.aa.a2.notes||""},
-      a3: {score: c.aa.a3.score||0, notes: c.aa.a3.notes||""},
-      a4: {score: c.aa.a4.score||0, notes: c.aa.a4.notes||""},
-    }
+    scoringDims: pos?.scoringDims||[]   // store position dims for voter card labels
   };
 
   try {
@@ -3585,11 +3579,10 @@ async function renderPanelVotingPage(surveyId, user) {
   }
 
   const prof = survey.candidateProfile || {};
-  // Use position-aware dim labels
-  const _panelPosId  = S.nav.positionId;
-  const _panelPos    = _panelPosId ? S.positions[_panelPosId] : null;
-  const _panelCandObj = prof.dims ? {dims: prof.dims} : {dims:{}};
-  const dispDims2    = getCandDimsDisplay(_panelCandObj, _panelPos);
+  // Use scoringDims stored in survey for correct labels (voter may not be logged into app)
+  const _fakePosForDims = prof.scoringDims?.length ? {scoringDims: prof.scoringDims} : null;
+  const _panelCandObj   = {dims: prof.dims||{}};
+  const dispDims2       = getCandDimsDisplay(_panelCandObj, _fakePosForDims);
 
   // Dimension bars
   const dimBars = dispDims2.length ? dispDims2.map(d => {
@@ -3665,10 +3658,7 @@ async function renderPanelVotingPage(surveyId, user) {
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--warn);margin-bottom:8px;">Watch areas</div>
           ${prof.watchAreas.map(w=>`<div style="font-size:12px;color:var(--ink);margin-bottom:4px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:var(--warn);">⚠</span>${w}</div>`).join("")}
         </div>`:""}
-        ${aaRows?`<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;">Individual interview scores</div>
-          ${aaRows}
-        </div>`:""}
+
       </div>
 
       <!-- Voting card -->
@@ -3692,9 +3682,6 @@ async function renderPanelVotingPage(surveyId, user) {
               <span class="pvote-emoji">🙅</span>Strong No<span class="pvote-weight">-4 pts</span>
             </button>
           </div>
-
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;">4A ASSESSMENT</div>
-          ${aaVoteDims}
 
           <div style="margin-bottom:14px;">
             <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;">Notes (optional)</div>
@@ -3742,21 +3729,12 @@ window.submitPanelVote = async function(surveyId, voterEmail, voterUid) {
   const notes = (document.getElementById("pv-notes")?.value||"").trim().slice(0,400);
 
   // Collect 4A stars
-  const aaStars = {};
-  ["a1","a2","a3","a4"].forEach(dim => {
-    for (let i=5;i>=1;i--) {
-      const el = document.getElementById(`pvstar-${dim}-${i}`);
-      if (el && el.textContent==="★") { aaStars[dim]=i; break; }
-    }
-    if (!aaStars[dim]) aaStars[dim]=0;
-  });
-
   try {
     const vRef = push(ref(db, `surveys/${surveyId}/votes`));
     await set(vRef, {
       voter: voterName, voterEmail, voterUid,
       vote: selectedPanelVote, notes: notes||"",
-      aaStars, ts: Date.now()
+      ts: Date.now()
     });
     // Show confirmation
     const body = document.getElementById("pv-body");
