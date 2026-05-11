@@ -1962,7 +1962,7 @@ window.createPosition = async function() {
 {"summary":"3-paragraph plain-text summary under 280 words: para1=company and role overview, para2=key responsibilities, para3=qualifications and compensation","scoringDims":[{"key":"dim1","label":"Short label 3-5 words","weight":25,"rationale":"One sentence why this matters for this role."}]}
 Rules: 5 to 7 dimensions. Weights must sum to exactly 100. Derive dimensions directly from THIS JD. Make labels role-specific, not generic.`;
       const raw = await callAPI([{role:"user", content:"JOB DESCRIPTION:\n" + jdText.slice(0,5000) + "\n\n" + prompt}], 1400);
-      const parsed = JSON.parse(raw.replace(/\`\`\`json\n?|\`\`\`\n?/g,"").trim());
+      const parsed = JSON.parse(raw.indexOf("{")>=0 ? raw.slice(raw.indexOf("{"), raw.lastIndexOf("}")+1) : raw)
       jdSummary = parsed.summary || jdText;
       const rawDims = (parsed.scoringDims||[]).map((d,i)=>({
         key:String(d.key||"dim"+i), label:String(d.label||"Dimension "+(i+1)),
@@ -2160,7 +2160,7 @@ window.processJD = async function() {
 {"summary":"3-paragraph plain-text summary under 280 words: para1=company and role overview, para2=key responsibilities, para3=qualifications and compensation","scoringDims":[{"key":"dim1","label":"Short label 3-5 words","weight":25,"rationale":"One sentence why this matters for this role."}]}
 Rules: 5 to 7 dimensions. Weights must sum to exactly 100. Derive dimensions directly from THIS JD — make labels role-specific, not generic. Higher weight = more critical to success in THIS role.`;
     const raw     = await callAPI([{role:"user", content:"JOB DESCRIPTION:\n" + jdText.slice(0,5000) + "\n\n" + prompt}], 1400);
-    const clean   = raw.replace(/```json\n?|```\n?/g,"").trim();
+    const clean   = (raw.indexOf("{")>=0 ? raw.slice(raw.indexOf("{"), raw.lastIndexOf("}")+1) : raw).trim()
     const parsed  = JSON.parse(clean);
     const summary = parsed.summary || jdText.slice(0,600);
     const rawDims = (parsed.scoringDims || []).map((d,i) => ({
