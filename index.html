@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>3DB | Talent Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
 <style>
 :root{
   --navy:#0f1e35;--navy2:#1a2f4a;--navy3:#243d5e;
@@ -1967,6 +1968,20 @@ window.openAddCandidateForPos = function(posId) {
   S._addToPosId = posId;
   const pos = S.positions[posId];
   document.getElementById("modal-cand-sub").textContent = pos ? `Adding to: ${pos.title}` : "Adding candidate";
+  // Reset all form fields
+  ["man-name","man-role","man-co","man-loc"].forEach(id => { const el=document.getElementById(id); if(el) el.value=""; });
+  // Reset sliders to midpoint defaults
+  const defaults = {s:25, o:18, c:5, p:3};
+  for (const [k,v] of Object.entries(defaults)) {
+    const sl = document.getElementById("sl-"+k);
+    const sv = document.getElementById("sv-"+k);
+    if (sl) sl.value = v;
+    if (sv) sv.textContent = v;
+  }
+  updateManTotal();
+  // Reset drop zone
+  const dz = document.getElementById("drop-zone");
+  if (dz) dz.innerHTML = `<div class="drop-icon">📄</div><div class="drop-text"><strong>Click to upload PDF</strong> — requires API key</div>`;
   openModal("modal-cand");
 };
 
@@ -2006,18 +2021,23 @@ window.doDragOver2 = function(e) { e.preventDefault(); document.getElementById("
 window.doJDDrop = function(e) { e.preventDefault(); document.getElementById("jd-drop-zone").classList.remove("dragover"); const f=e.dataTransfer.files[0]; if(f) handleJDFile(f); };
 
 window.handleFileSelect = async function(file) {
-  if (!S.apiKey) { alert("Add your Anthropic API key in Settings to enable AI resume analysis."); return; }
+  if (!S.apiKey) { alert("Add your API key in Settings to enable AI resume analysis."); return; }
   const dz = document.getElementById("drop-zone");
-  dz.innerHTML = `<div class="drop-icon">⏳</div><div class="drop-text">Analyzing with Claude...</div>`;
+  dz.innerHTML = `<div class="drop-icon">⏳</div><div class="drop-text">Reading PDF and analyzing...</div>`;
   try {
-    const b64 = await toB64(file);
-    const prompt = `Analyze this resume for the VP of Operations & Customer Experience role at 3 Day Blinds. Score on 4 dimensions (total 100): Strategy&Transformation(max50 — personal transformation execution with measurable outcomes), Operations(max35 — direct leadership of 100+ people), CX(max10 — owned post-sale CX/contact center with metrics), P&L(max5 — direct P&L at scale). Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
-    // OpenAI gpt-4o vision — send PDF page as image
-    // We send base64 as a data URL in image_url (gpt-4o can read PDF-sourced images)
-    const resp = await callAPI([{role:"user",content:[
-      {type:"image_url", image_url:{url:`data:application/pdf;base64,${b64}`, detail:"high"}},
-      {type:"text", text:prompt}
-    ]}], 900);
+    const resumeText = await extractPDFText(file);
+    if (!resumeText || resumeText.length < 100) throw new Error("Could not extract text from PDF. Try a text-based PDF.");
+    // Build a dynamic prompt using the current position context
+    const posId = S._addToPosId;
+    const pos = posId ? S.positions[posId] : null;
+    const posContext = pos
+      ? `Position: ${pos.title}${pos.jdSummary ? ". JD summary: " + pos.jdSummary.slice(0,400) : ""}.`
+      : "Position: General leadership role at 3 Day Blinds.";
+    const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score on 4 dimensions (total 100 pts): Strategy&Transformation(max50 — personal execution of transformation/growth initiatives with measurable outcomes), Operations(max35 — direct leadership of large teams 50+ people with P&L), CX(max10 — owned post-sale CX or contact center with hard metrics), P&L(max5 — direct P&L ownership at scale). Calibrate scores to this specific role — a District Sales Manager candidate should be scored on sales leadership and team development, not corporate transformation. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
+    const resp = await callAPI([{role:"user", content: "RESUME:
+" + resumeText.slice(0, 6000) + "
+
+" + prompt}], 900);
     const parsed = JSON.parse(resp.replace(/```json\n?|```\n?/g,"").trim());
     const id = "c_" + Date.now();
     const cand = {id,name:parsed.name,role:parsed.currentRole,company:parsed.currentCompany,location:parsed.location,stage:"screening",resumeScore:parsed.totalScore,
@@ -2092,7 +2112,7 @@ window.processJD = async function() {
     const prompt = "Extract a structured summary of this job description in 3 paragraphs: (1) Company and role overview, (2) Key responsibilities, (3) Qualifications and compensation. Keep it under 300 words. Plain text only.";
     let messages;
     if (pasteText) { messages = [{role:"user",content:pasteText+"\n\n"+prompt}]; }
-    else { const b64=await toB64(jdFile); messages=[{role:"user",content:[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b64}},{type:"text",text:prompt}]}]; }
+    else { const jdText=await extractPDFText(jdFile); messages=[{role:"user",content:jdText+"\n\n"+prompt}]; }
     const summary = await callAPI(messages, 600, jdFile?"pdfs-2024-09-25":null);
     S.positions[posId].jdSummary = summary;
     await fbUpdate(`positions/${posId}`, {jdSummary: summary});
@@ -3963,6 +3983,27 @@ function algoRec(score) {
 }
 function recLbl(r) { return {pass:"Pass",screen:"Screen",next:"Next Int.",panel:"Panel",hire:"Hire"}[r]||r; }
 function esc(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+async function extractPDFText(file) {
+  try {
+    if (typeof pdfjsLib === "undefined") {
+      // fallback: read as text (for text-based PDFs)
+      return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsText(file);});
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js";
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    let text = "";
+    const pages = Math.min(pdf.numPages, 4);
+    for (let i = 1; i <= pages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(" ") + "\n";
+    }
+    return text.trim();
+  } catch(e) {
+    throw new Error("Could not read PDF: " + e.message);
+  }
+}
 function toB64(file) { return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);}); }
 
 async function callAPI(messages, maxTokens=800, betaHeader=null, systemMsg=null) {
