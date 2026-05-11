@@ -2107,56 +2107,56 @@ window.handleFileSelect = async function(file) {
   try {
     const resumeText = await extractPDFText(file);
     if (!resumeText || resumeText.length < 100) throw new Error("Could not extract text from PDF. Try a text-based PDF.");
+    // Sanitize resume text to avoid API encoding issues
+    const safeResume = resumeText.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, " ").slice(0, 5000);
 
     const posId = S._addToPosId;
     const pos   = posId ? S.positions[posId] : null;
     const posContext = pos
-      ? "Position: " + pos.title + (pos.jdSummary ? ". JD summary: " + pos.jdSummary.slice(0,400) : "") + "."
+      ? "Position: " + pos.title + (pos.jdSummary ? ". Role summary: " + pos.jdSummary.slice(0, 300) : "") + "."
       : "Position: General leadership role at 3 Day Blinds.";
 
-    // Use ALL position scoring dims (not just top 4)
+    // Use ALL position scoring dims — safe positional keys p0..pN
     const scoringDims = (pos && pos.scoringDims && pos.scoringDims.length)
       ? pos.scoringDims
-      : getDimsForPos(pos).map((d,i) => ({
-          key: ["strategy","ops","cx","pl"][i]||("d"+i),
-          label: d.label, weight: d.max
-        }));
+      : getDimsForPos(pos).map((d, i) => ({key: d.key, label: d.label, weight: d.max}));
 
-    // Build JSON template and dim descriptions for the prompt
-    const dimTemplate = scoringDims.reduce((o,d) => { o[d.key] = 0; return o; }, {});
-    const dimDesc = scoringDims.map(d => '"' + d.key + '" = ' + d.label + " (0-" + d.weight + " pts, weight " + d.weight + "%)").join("; ");
-    const totalMax = scoringDims.reduce((s,d) => s + Number(d.weight), 0);
+    const dimLines = scoringDims.map((d, i) => "p" + i + "=" + d.label + "(max " + d.weight + ")").join(", ");
+    const emptyDims = scoringDims.map((d, i) => '"p' + i + '":0').join(",");
+    const totalMax  = scoringDims.reduce((s, d) => s + Number(d.weight), 0);
 
-    const prompt = "Analyze this resume for the following role at 3 Day Blinds. " + posContext +
-      " Score this candidate on ALL " + scoringDims.length + " dimensions below. Each key maps directly to a score. Scores must not exceed each dimension max. " +
-      "Dimensions: " + dimDesc + ". " +
-      "totalScore = sum of all dimension scores (max " + totalMax + "). " +
-      "Return ONLY valid JSON, no markdown: {" +
-        '"name":"","currentRole":"","currentCompany":"","location":"",' +
+    const prompt = "Score this candidate for: " + posContext +
+      " Dimensions (use EXACT keys shown): " + dimLines + ". " +
+      "All scores are integers, each within its max, total should be close to " + totalMax + ". " +
+      "Return ONLY valid JSON: {" +
+        '"name":"","role":"","company":"","location":"",' +
         '"summary":"2-3 sentences",' +
-        '"dims":' + JSON.stringify(dimTemplate) + "," +
-        '"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}';
+        '"dims":{' + emptyDims + "}," +
+        '"total":0,"strengths":["s1","s2"],"watch":["w1","w2"]}';
 
-    const resp   = await callAPI([{role:"user", content: "RESUME:\n" + resumeText.slice(0,6000) + "\n\n" + prompt}], 1000);
-    const parsed = JSON.parse(resp.indexOf("{")>=0 ? resp.slice(resp.indexOf("{"),resp.lastIndexOf("}")+1) : resp);
+    const resp   = await callAPI([{role:"user", content: "RESUME:\n" + safeResume + "\n\n" + prompt}], 1200);
+    const clean  = resp.indexOf("{") >= 0 ? resp.slice(resp.indexOf("{"), resp.lastIndexOf("}") + 1) : resp;
+    const parsed = JSON.parse(clean);
 
-    // Build dims object using ALL scoring dims
+    // Map positional keys back to scoringDim keys
     const dimsObj = {};
-    scoringDims.forEach(d => {
-      dimsObj[d.key] = {score: Number(parsed.dims?.[d.key]) || 0, max: Number(d.weight) || 0};
+    scoringDims.forEach((d, i) => {
+      const score = Number(parsed.dims["p" + i]) || 0;
+      dimsObj[d.key] = {score, max: Number(d.weight) || 0};
     });
-    const totalScore = Object.values(dimsObj).reduce((s,d) => s + d.score, 0);
+    const totalScore = Object.values(dimsObj).reduce((s, d) => s + d.score, 0);
 
-    const id   = "c_" + Date.now();
+    const id = "c_" + Date.now();
     const cand = {
-      id, name:parsed.name, role:parsed.currentRole, company:parsed.currentCompany,
-      location:parsed.location, stage:"screening", resumeScore:totalScore,
-      dims: dimsObj,
-      summary:parsed.summary, strengths:parsed.strengths, watchAreas:parsed.watchAreas, warning:"",
-      aa:{a1:{score:0,notes:"",qNotes:["","",""]},a2:{score:0,notes:"",qNotes:["","",""]},
-          a3:{score:0,notes:"",qNotes:["","",""]},a4:{score:0,notes:"",qNotes:["","",""]}},
-      rec:"",nextName:"",nextRole:"",interviewerName:"",recruiterName:"",recruiterEmail:"",
-      meetingNotes:"",emailInstructions:"",emailText:""
+      id, name: parsed.name || "", role: parsed.role || "",
+      company: parsed.company || "", location: parsed.location || "",
+      stage: "screening", resumeScore: totalScore, dims: dimsObj,
+      summary: parsed.summary || "",
+      strengths: parsed.strengths || [], watchAreas: parsed.watch || [], warning: "",
+      aa: {a1:{score:0,notes:"",qNotes:["","",""]}, a2:{score:0,notes:"",qNotes:["","",""]},
+           a3:{score:0,notes:"",qNotes:["","",""]}, a4:{score:0,notes:"",qNotes:["","",""]}},
+      rec:"", nextName:"", nextRole:"", interviewerName:"", recruiterName:"",
+      recruiterEmail:"", meetingNotes:"", emailInstructions:"", emailText:""
     };
     S.candidates[id] = cand;
     await fbSet("candidates/" + id, cand);
@@ -4291,16 +4291,13 @@ function getCandDimsDisplay(c, pos) {
 }
 
 function getDimsForPos(pos) {
-  // If position has JD-derived scoringDims, use top 4 by weight as the 4 slider dims
+  // Use ALL JD-derived scoringDims if available
   if (pos && Array.isArray(pos.scoringDims) && pos.scoringDims.length >= 1) {
-    const sorted = [...pos.scoringDims].sort((a,b) => Number(b.weight)-Number(a.weight));
-    const top4   = sorted.slice(0,4);
-    const keys   = ["s","o","c","p"];
-    return top4.map((d,i) => ({
-      key:   keys[i],
+    return pos.scoringDims.map((d, i) => ({
+      key:   d.key || ("d" + i),
       label: d.label,
-      max:   Number(d.weight),
-      def:   Math.round(Number(d.weight)/2)
+      max:   Number(d.weight) || 10,
+      def:   Math.round(Number(d.weight) / 2)
     }));
   }
   // Fall back to hardcoded profile by position title
