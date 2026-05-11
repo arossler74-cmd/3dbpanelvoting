@@ -2079,10 +2079,7 @@ window.handleFileSelect = async function(file) {
     const dimDesc = dims.map(d=>`${d.label}(max${d.max})`).join(", ");
     const dimKeys = dims.map(d=>d.key==="s"?"strategy":d.key==="o"?"ops":d.key==="c"?"cx":"pl");
     const prompt = `Analyze this resume for the following role at 3 Day Blinds. ${posContext} Score on exactly 4 dimensions that total 100 pts: ${dimDesc}. Scores must respect each dimension's max. Return ONLY valid JSON, no markdown: {"name":"","currentRole":"","currentCompany":"","location":"","summary":"2-3 sentences","dims":{"strategy":0,"ops":0,"cx":0,"pl":0},"totalScore":0,"strengths":["s1","s2","s3"],"watchAreas":["w1","w2","w3"]}`;
-    const resp = await callAPI([{role:"user", content: "RESUME:
-" + resumeText.slice(0, 6000) + "
-
-" + prompt}], 900);
+    const resp = await callAPI([{role:"user", content: "RESUME:\n" + resumeText.slice(0,6000) + "\n\n" + prompt}], 900);
     const parsed = JSON.parse(resp.replace(/```json\n?|```\n?/g,"").trim());
     const id = "c_" + Date.now();
     const cand = {id,name:parsed.name,role:parsed.currentRole,company:parsed.currentCompany,location:parsed.location,stage:"screening",resumeScore:parsed.totalScore,
@@ -2092,9 +2089,6 @@ window.handleFileSelect = async function(file) {
       rec:"",nextName:"",nextRole:"",interviewerName:"",recruiterName:"",recruiterEmail:"",meetingNotes:"",emailInstructions:"",emailText:""};
     S.candidates[id] = cand;
     await fbSet(`candidates/${id}`, cand);
-    // Store PDF for the Resume tab (if under size limit)
-    try { if (b64 && b64.length < 3500000) await fbSet(`resumes/${id}`, b64); } catch(e) {}
-    const posId = S._addToPosId;
     if (posId && S.positions[posId]) {
       if (!S.positions[posId].candidateIds) S.positions[posId].candidateIds = [];
       if (!S.positions[posId].candidateIds.includes(id)) S.positions[posId].candidateIds.push(id);
