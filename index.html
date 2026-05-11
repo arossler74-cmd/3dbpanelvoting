@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>3DB | Talent Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
   --navy:#0f1e35;--navy2:#1a2f4a;--navy3:#243d5e;
@@ -1428,7 +1428,8 @@ function renderPosition(posId) {
           ${pos.location?`<span class="pos-tag pt-loc">${pos.location}</span>`:""}
           ${pos.workflowType?`<span class="pos-tag" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);">⟳ ${WORKFLOW_TYPES[pos.workflowType]?.label||pos.workflowType}</span>`:""}
         </div>
-        <button onclick="openEditPosition('${posId}')" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;margin-left:12px;">✏ Edit Position</button>
+        <button onclick="openEditPosition('${posId}')" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;margin-left:12px;">✏ Edit</button>
+        <button onclick="deletePosition('${posId}')" style="background:rgba(220,38,38,.15);color:#fca5a5;border:1px solid rgba(220,38,38,.3);border-radius:7px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;margin-left:6px;">🗑 Delete</button>
       </div>
     </div>
     <div class="pos-tabs">
@@ -1438,7 +1439,7 @@ function renderPosition(posId) {
       <div class="pos-tab ${tab==="jd"?"active":""}" onclick="setPosTab('jd')">Job Description</div>
     </div>
     <div class="pos-content">
-      ${tab==="pipeline"?renderPipeline(pos,cids):tab==="candidates"?renderCandTable(pos,cids):renderJD(pos)}
+      ${tab==="pipeline"?renderPipeline(pos,cids):tab==="candidates"?renderCandTable(pos,cids):tab==="scoring"?renderScoringProfile(posId):renderJD(pos)}
     </div>`;
 }
 
@@ -1948,7 +1949,34 @@ window.saveEditPosition = async function() {
 window.createPosition = async function() {
   const title = document.getElementById("np-title").value.trim();
   if (!title) { alert("Position title is required."); return; }
+  const jdText = document.getElementById("np-jd").value.trim();
+  const btn = document.querySelector("#modal-pos .modal-btn.primary");
+  if (btn) { btn.textContent = "Creating..."; btn.style.pointerEvents = "none"; }
   const id = "pos_" + Date.now();
+  let scoringDims = JSON.parse(JSON.stringify(DEFAULT_SCORING_DIMS));
+  let jdSummary = jdText;
+  // If JD text + API key available, extract dynamic scoring profile
+  if (jdText && S.apiKey) {
+    try {
+      const prompt = `You are a senior talent strategist. Analyze this job description and return ONLY valid JSON with no markdown fences:
+{"summary":"3-paragraph plain-text summary under 280 words: para1=company and role overview, para2=key responsibilities, para3=qualifications and compensation","scoringDims":[{"key":"dim1","label":"Short label 3-5 words","weight":25,"rationale":"One sentence why this matters for this role."}]}
+Rules: 5 to 7 dimensions. Weights must sum to exactly 100. Derive dimensions directly from THIS JD. Make labels role-specific, not generic.`;
+      const raw = await callAPI([{role:"user", content:"JOB DESCRIPTION:\n" + jdText.slice(0,5000) + "\n\n" + prompt}], 1400);
+      const parsed = JSON.parse(raw.replace(/\`\`\`json\n?|\`\`\`\n?/g,"").trim());
+      jdSummary = parsed.summary || jdText;
+      const rawDims = (parsed.scoringDims||[]).map((d,i)=>({
+        key:String(d.key||"dim"+i), label:String(d.label||"Dimension "+(i+1)),
+        weight:Number(d.weight)||0, rationale:String(d.rationale||"")
+      }));
+      const wSum = rawDims.reduce((s,d)=>s+d.weight,0);
+      if (wSum>0 && wSum!==100) {
+        rawDims.forEach(d=>{d.weight=Math.round(d.weight/wSum*100);});
+        const drift=100-rawDims.reduce((s,d)=>s+d.weight,0);
+        if (rawDims.length) rawDims[rawDims.length-1].weight+=drift;
+      }
+      if (rawDims.length) scoringDims = rawDims;
+    } catch(e) { console.warn("JD scoring extraction failed:", e.message); }
+  }
   const pos = {
     id, title,
     dept: document.getElementById("np-dept").value.trim()||"",
@@ -1956,14 +1984,28 @@ window.createPosition = async function() {
     compensation: document.getElementById("np-comp").value.trim()||"",
     reportsTo: document.getElementById("np-reports").value.trim()||"",
     status: "active", openDate: new Date().toISOString().slice(0,7),
-    jdSummary: document.getElementById("np-jd").value.trim()||"",
-    workflowType: document.getElementById("np-workflow")?.value||"standard",
-    candidateIds: [],
-    scoringDims: JSON.parse(JSON.stringify(DEFAULT_SCORING_DIMS))
+    jdSummary, workflowType: document.getElementById("np-workflow")?.value||"standard",
+    candidateIds: [], scoringDims
   };
   S.positions[id] = pos;
   await fbSet(`positions/${id}`, pos);
-  closeModal("modal-pos"); navPos(id); render();
+  if (btn) { btn.textContent = "Create Position"; btn.style.pointerEvents = ""; }
+  closeModal("modal-pos"); navPos(id);
+  if (jdText && S.apiKey) setPosTab("scoring"); else render();
+};
+
+window.deletePosition = async function(posId) {
+  const pos = S.positions[posId];
+  if (!pos) return;
+  const candCount = (pos.candidateIds||[]).length;
+  const msg = candCount
+    ? `Delete "${pos.title}"? This position has ${candCount} candidate(s) linked to it. The candidates will remain in the system but the position will be removed.`
+    : `Delete "${pos.title}"? This cannot be undone.`;
+  if (!confirm(msg)) return;
+  delete S.positions[posId];
+  try { await fbRemove(`positions/${posId}`); } catch(e) { console.warn("Firebase remove error:", e); }
+  S.nav = {view:"dashboard", positionId:null, candidateId:null};
+  render();
 };
 
 // ============================================================
@@ -4009,10 +4051,9 @@ function esc(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 async function extractPDFText(file) {
   try {
     if (typeof pdfjsLib === "undefined") {
-      // fallback: read as text (for text-based PDFs)
-      return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsText(file);});
+      throw new Error("PDF library not loaded. Please refresh the page and try again.");
     }
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
     let text = "";
@@ -4071,7 +4112,7 @@ const POSITION_DIMS = {
 function getDimsForPos(pos) {
   if (!pos) return POSITION_DIMS.default;
   const t = (pos.title||"").toLowerCase();
-  if (t.includes("district sales") || t.includes(" dsm") || t.includes("sales manager") || t.includes("sales director")) {
+  if (t.includes("district sales") || t.includes("dsm") || t.includes("sales manager") || t.includes("sales director")) {
     return POSITION_DIMS.dsm;
   }
   return POSITION_DIMS.default;
