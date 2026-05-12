@@ -3518,10 +3518,48 @@ window.launchPanel = async function(candId, posId) {
 window.closePanelVoting = async function(surveyId, candId) {
   await update(ref(db, `surveys/${surveyId}`), {isOpen: false});
   if (S_panels[candId]) S_panels[candId].isOpen = false;
-  showSync("✓ Voting closed");
-  // Reload to get latest votes
+
+  // Compute combined 4A averages: pre-panel interviewer scores + all voter 4A scores
   const snap = await get(ref(db, `surveys/${surveyId}`));
-  if (snap.val()) S_panels[candId] = snap.val();
+  const surveyData = snap.val();
+  if (surveyData) {
+    S_panels[candId] = surveyData;
+    const c = S.candidates[candId];
+    if (c) {
+      const allScores = {a1:[], a2:[], a3:[], a4:[]};
+      // Add pre-panel interviewer 4A scores
+      ["a1","a2","a3","a4"].forEach(d => {
+        if (c.aa[d]?.score > 0) allScores[d].push(c.aa[d].score);
+      });
+      // Add each voter's 4A scores
+      Object.values(surveyData.votes||{}).forEach(v => {
+        if (v.aaStars) {
+          ["a1","a2","a3","a4"].forEach(d => {
+            if (v.aaStars[d] > 0) allScores[d].push(v.aaStars[d]);
+          });
+        }
+      });
+      // Compute averages and store on candidate
+      const combinedAA = {};
+      ["a1","a2","a3","a4"].forEach(d => {
+        const arr = allScores[d];
+        combinedAA[d] = arr.length ? Math.round((arr.reduce((s,v)=>s+v,0)/arr.length)*10)/10 : 0;
+      });
+      const aaArr = Object.values(combinedAA);
+      const aaAvg = aaArr.some(s=>s>0) ? (aaArr.reduce((a,b)=>a+b,0)/4).toFixed(1) : null;
+      S.candidates[candId].combinedAA = combinedAA;
+      S.candidates[candId].combinedAaAvg = aaAvg;
+      await fbUpdate(`candidates/${candId}`, {combinedAA, combinedAaAvg: aaAvg});
+      showSync("✓ Voting closed · Combined 4A avg: " + (aaAvg||"—"));
+    } else {
+      showSync("✓ Voting closed");
+    }
+  } else {
+    showSync("✓ Voting closed");
+  }
+  // Reload to get latest votes
+  const snap2 = await get(ref(db, `surveys/${surveyId}`));
+  if (snap2.val()) S_panels[candId] = snap2.val();
   renderMain();
 };
 
@@ -3579,10 +3617,18 @@ async function renderPanelVotingPage(surveyId, user) {
   }
 
   const prof = survey.candidateProfile || {};
-  // Use scoringDims stored in survey for correct labels (voter may not be logged into app)
-  const _fakePosForDims = prof.scoringDims?.length ? {scoringDims: prof.scoringDims} : null;
-  const _panelCandObj   = {dims: prof.dims||{}};
-  const dispDims2       = getCandDimsDisplay(_panelCandObj, _fakePosForDims);
+  // Fetch position from Firebase to get latest scoringDims (most reliable)
+  let _livePos = null;
+  if (survey.positionId) {
+    try {
+      const posSnap = await get(ref(db, "positions/" + survey.positionId));
+      _livePos = posSnap.val();
+    } catch(e) {}
+  }
+  // Fallback to scoringDims stored in survey snapshot
+  if (!_livePos && prof.scoringDims?.length) _livePos = {scoringDims: prof.scoringDims};
+  const _panelCandObj = {dims: prof.dims||{}};
+  const dispDims2     = getCandDimsDisplay(_panelCandObj, _livePos);
 
   // Dimension bars
   const dimBars = dispDims2.length ? dispDims2.map(d => {
@@ -3683,6 +3729,9 @@ async function renderPanelVotingPage(surveyId, user) {
             </button>
           </div>
 
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;">4A Assessment</div>
+          ${aaVoteDims}
+
           <div style="margin-bottom:14px;">
             <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;">Notes (optional)</div>
             <textarea id="pv-notes" maxlength="400" placeholder="Brief observations for the hiring committee..." style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--paper);color:var(--ink);resize:vertical;min-height:70px;outline:none;"></textarea>
@@ -3729,12 +3778,22 @@ window.submitPanelVote = async function(surveyId, voterEmail, voterUid) {
   const notes = (document.getElementById("pv-notes")?.value||"").trim().slice(0,400);
 
   // Collect 4A stars
+  // Collect 4A star ratings from voter
+  const aaStars = {};
+  ["a1","a2","a3","a4"].forEach(dim => {
+    for (let i=5;i>=1;i--) {
+      const el = document.getElementById(`pvstar-${dim}-${i}`);
+      if (el && (el.textContent==="★" || el.classList.contains("lit"))) { aaStars[dim]=i; break; }
+    }
+    if (!aaStars[dim]) aaStars[dim]=0;
+  });
+
   try {
     const vRef = push(ref(db, `surveys/${surveyId}/votes`));
     await set(vRef, {
       voter: voterName, voterEmail, voterUid,
       vote: selectedPanelVote, notes: notes||"",
-      ts: Date.now()
+      aaStars, ts: Date.now()
     });
     // Show confirmation
     const body = document.getElementById("pv-body");
