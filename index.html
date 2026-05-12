@@ -2254,6 +2254,11 @@ window.handleFileSelect = async function(file) {
     };
     S.candidates[id] = cand;
     await fbSet("candidates/" + id, cand);
+    // Store PDF as base64 for the Resume tab viewer
+    try {
+      const b64 = await toB64(file);
+      if (b64 && b64.length < 3500000) await fbSet("resumes/" + id, b64);
+    } catch(e) { console.warn("PDF save failed:", e.message); }
     if (posId && S.positions[posId]) {
       if (!S.positions[posId].candidateIds) S.positions[posId].candidateIds = [];
       if (!S.positions[posId].candidateIds.includes(id)) S.positions[posId].candidateIds.push(id);
@@ -3621,18 +3626,22 @@ async function renderPanelVotingPage(surveyId, user) {
   let _livePos  = null;
   let _liveCand = null;
   const ownerUid = survey.ownerUid || "";
+  console.log("[PanelVote] ownerUid:", ownerUid, "posId:", survey.positionId, "candId:", survey.candidateId);
   if (survey.positionId && ownerUid) {
     try {
       const posSnap = await get(ref(db, "talent/" + ownerUid + "/positions/" + survey.positionId));
       _livePos = posSnap.val();
-    } catch(e) {}
+      console.log("[PanelVote] livePos scoringDims:", _livePos?.scoringDims?.length);
+    } catch(e) { console.warn("[PanelVote] pos fetch failed:", e.message); }
   }
   if (survey.candidateId && ownerUid) {
     try {
       const candSnap = await get(ref(db, "talent/" + ownerUid + "/candidates/" + survey.candidateId));
       _liveCand = candSnap.val();
-    } catch(e) {}
+      console.log("[PanelVote] liveCand dims keys:", Object.keys(_liveCand?.dims||{}));
+    } catch(e) { console.warn("[PanelVote] cand fetch failed:", e.message); }
   }
+  if (!ownerUid) console.warn("[PanelVote] ownerUid missing from survey — cannot fetch live data");
   // Fallback chain: live > snapshot scoringDims
   if (!_livePos && prof.scoringDims?.length) _livePos = {scoringDims: prof.scoringDims};
   // Use live candidate dims if available, fall back to survey snapshot
