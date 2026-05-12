@@ -3620,15 +3620,16 @@ async function renderPanelVotingPage(surveyId, user) {
   // Fetch live position AND live candidate from Firebase for up-to-date data
   let _livePos  = null;
   let _liveCand = null;
-  if (survey.positionId) {
+  const ownerUid = survey.ownerUid || "";
+  if (survey.positionId && ownerUid) {
     try {
-      const posSnap = await get(ref(db, "positions/" + survey.positionId));
+      const posSnap = await get(ref(db, "talent/" + ownerUid + "/positions/" + survey.positionId));
       _livePos = posSnap.val();
     } catch(e) {}
   }
-  if (survey.candidateId) {
+  if (survey.candidateId && ownerUid) {
     try {
-      const candSnap = await get(ref(db, "candidates/" + survey.candidateId));
+      const candSnap = await get(ref(db, "talent/" + ownerUid + "/candidates/" + survey.candidateId));
       _liveCand = candSnap.val();
     } catch(e) {}
   }
