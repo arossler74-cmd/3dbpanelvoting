@@ -2233,10 +2233,13 @@ window.handleFileSelect = async function(file) {
     const parsed = JSON.parse(clean);
 
     // Map positional keys back to scoringDim keys
+    // For legacy 4-slot dims, use long keys (strategy/ops/cx/pl) for consistency
+    const legacyLongKeys = {s:"strategy", o:"ops", c:"cx", p:"pl"};
     const dimsObj = {};
     scoringDims.forEach((d, i) => {
       const score = Number(parsed.dims["p" + i]) || 0;
-      dimsObj[d.key] = {score, max: Number(d.weight) || 0};
+      const storeKey = legacyLongKeys[d.key] || d.key;  // normalise s→strategy etc
+      dimsObj[storeKey] = {score, max: Number(d.weight) || 0};
     });
     const totalScore = Object.values(dimsObj).reduce((s, d) => s + d.score, 0);
 
@@ -4413,37 +4416,46 @@ const POSITION_DIMS = {
 // Supports both N-dim (new, pos.scoringDims keys) and 4-slot (legacy) formats
 function getCandDimsDisplay(c, pos) {
   const fallbackColors = ["#5b4fcf","#1a6b3c","#1d5fa6","#9a7230","#7c3aed","#059669","#dc2626"];
+  // All possible key aliases — short key, long key, and positional
   const legacyKeyMap   = {s:"strategy", o:"ops", c:"cx", p:"pl"};
+  const reverseLegacy  = {strategy:"s", ops:"o", cx:"c", pl:"p"};
   const legacyColors   = {s:"#5b4fcf", o:"#1a6b3c", c:"#1d5fa6", p:"#9a7230"};
 
-  // N-dim format: candidate dims keys match pos.scoringDims keys directly
+  const cDims = c.dims || {};
+  const cDimsEntries = Object.entries(cDims);
+
+  // Helper: find a dim value by trying every possible key alias + positional fallback
+  function findRaw(key, index) {
+    return cDims[key]                          // direct match
+      || cDims[legacyKeyMap[key]]              // short→long  (s→strategy)
+      || cDims[reverseLegacy[key]]             // long→short  (strategy→s)
+      || (cDimsEntries[index] ? cDimsEntries[index][1] : null)  // positional
+      || {};
+  }
+
+  // N-dim format: position has JD-derived scoringDims
   const scoringDims = pos?.scoringDims;
   if (scoringDims && scoringDims.length) {
-    const cDimsEntries = Object.entries(c.dims || {});
     return scoringDims.map((d, i) => {
-      // Try direct key match first
-      let raw = c.dims?.[d.key];
-      // Positional fallback: if key doesn't match, use i-th entry in dims object
-      if (!raw && cDimsEntries[i]) raw = cDimsEntries[i][1];
-      raw = raw || {};
+      const raw = findRaw(d.key, i);
       return {
         label: d.label,
         score: Number(raw.score) || 0,
-        max:   Number(raw.max)   || Number(d.weight) || 100,
+        max:   Number(raw.max) || Number(d.weight) || 100,
         color: fallbackColors[i % fallbackColors.length]
       };
     });
   }
-  // Legacy 4-slot format (getDimsForPos top-4 mapping)
+
+  // Legacy 4-slot format
   const posDims = getDimsForPos(pos);
-  return posDims.map(d => {
-    const ck  = legacyKeyMap[d.key] || d.key;
-    const raw = c.dims?.[ck] || {};
+  return posDims.map((d, i) => {
+    const raw = findRaw(d.key, i);
     return {
       label: d.label,
       score: Number(raw.score) || 0,
-      max:   Number(raw.max)   || Number(d.max) || 100,
-      color: legacyColors[d.key] || "#6b7280"
+      max:   Number(raw.max) || Number(d.max) || 100,
+      color: legacyColors[d.key] || fallbackColors[i]
     };
   });
 }
