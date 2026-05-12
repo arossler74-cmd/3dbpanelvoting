@@ -3617,18 +3617,30 @@ async function renderPanelVotingPage(surveyId, user) {
   }
 
   const prof = survey.candidateProfile || {};
-  // Fetch position from Firebase to get latest scoringDims (most reliable)
-  let _livePos = null;
+  // Fetch live position AND live candidate from Firebase for up-to-date data
+  let _livePos  = null;
+  let _liveCand = null;
   if (survey.positionId) {
     try {
       const posSnap = await get(ref(db, "positions/" + survey.positionId));
       _livePos = posSnap.val();
     } catch(e) {}
   }
-  // Fallback to scoringDims stored in survey snapshot
+  if (survey.candidateId) {
+    try {
+      const candSnap = await get(ref(db, "candidates/" + survey.candidateId));
+      _liveCand = candSnap.val();
+    } catch(e) {}
+  }
+  // Fallback chain: live > snapshot scoringDims
   if (!_livePos && prof.scoringDims?.length) _livePos = {scoringDims: prof.scoringDims};
-  const _panelCandObj = {dims: prof.dims||{}};
-  const dispDims2     = getCandDimsDisplay(_panelCandObj, _livePos);
+  // Use live candidate dims if available, fall back to survey snapshot
+  const _displayCand = _liveCand ? {dims: _liveCand.dims||{}} : {dims: prof.dims||{}};
+  const _displayScore = _liveCand ? (_liveCand.resumeScore||prof.resumeScore||0) : (prof.resumeScore||0);
+  const _displaySummary = _liveCand?.summary || prof.summary || "";
+  const _displayStrengths = _liveCand?.strengths || prof.strengths || [];
+  const _displayWatch = _liveCand?.watchAreas || prof.watchAreas || [];
+  const dispDims2     = getCandDimsDisplay(_displayCand, _livePos);
 
   // Dimension bars
   const dimBars = dispDims2.length ? dispDims2.map(d => {
@@ -3687,22 +3699,22 @@ async function renderPanelVotingPage(surveyId, user) {
             <div style="font-size:16px;font-weight:600;color:white;margin-bottom:3px;">${prof.positionTitle||survey.role}</div>
             <div style="font-size:13px;color:rgba(255,255,255,.6);">${prof.company||""} · ${prof.location||""}</div>
             <div style="margin-top:8px;display:flex;align-items:baseline;gap:6px;">
-              <span style="font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:${(prof.resumeScore||0)>=80?"#34d399":(prof.resumeScore||0)>=65?"#fbbf24":"#9ca3af"};">${prof.resumeScore||"—"}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:${_displayScore>=80?"#34d399":_displayScore>=65?"#fbbf24":"#9ca3af"};">${_displayScore||"—"}</span>
               <span style="font-size:11px;color:rgba(255,255,255,.4);">/100 resume score</span>
             </div>
           </div>
           <div style="padding:16px 20px;">
-            ${prof.summary?`<div style="font-size:12px;color:var(--ink);line-height:1.6;margin-bottom:14px;">${prof.summary}</div>`:""}
+            ${_displaySummary?`<div style="font-size:12px;color:var(--ink);line-height:1.6;margin-bottom:14px;">${_displaySummary}</div>`:""}
             ${dimBars?`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;">Evaluation scores</div>${dimBars}`:""}
           </div>
         </div>
-        ${prof.strengths?.length?`<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+        ${_displayStrengths?.length?`<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--adv);margin-bottom:8px;">Strengths</div>
-          ${prof.strengths.map(s=>`<div style="font-size:12px;color:var(--ink);margin-bottom:4px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:var(--adv);">✓</span>${s}</div>`).join("")}
+          ${_displayStrengths.map(s=>`<div style="font-size:12px;color:var(--ink);margin-bottom:4px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:var(--adv);">✓</span>${s}</div>`).join("")}
         </div>`:""}
-        ${prof.watchAreas?.length?`<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+        ${_displayWatch?.length?`<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--warn);margin-bottom:8px;">Watch areas</div>
-          ${prof.watchAreas.map(w=>`<div style="font-size:12px;color:var(--ink);margin-bottom:4px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:var(--warn);">⚠</span>${w}</div>`).join("")}
+          ${_displayWatch.map(w=>`<div style="font-size:12px;color:var(--ink);margin-bottom:4px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:var(--warn);">⚠</span>${w}</div>`).join("")}
         </div>`:""}
 
       </div>
@@ -4397,8 +4409,13 @@ function getCandDimsDisplay(c, pos) {
   // N-dim format: candidate dims keys match pos.scoringDims keys directly
   const scoringDims = pos?.scoringDims;
   if (scoringDims && scoringDims.length) {
+    const cDimsEntries = Object.entries(c.dims || {});
     return scoringDims.map((d, i) => {
-      const raw = c.dims?.[d.key] || {};
+      // Try direct key match first
+      let raw = c.dims?.[d.key];
+      // Positional fallback: if key doesn't match, use i-th entry in dims object
+      if (!raw && cDimsEntries[i]) raw = cDimsEntries[i][1];
+      raw = raw || {};
       return {
         label: d.label,
         score: Number(raw.score) || 0,
